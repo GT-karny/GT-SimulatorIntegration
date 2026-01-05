@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" fmiVersion="2.0" modelName="FMU2cs_PathFollowerDriver" guid="7dd806f0-410c-54db-8149-4ed474538542" generationTool="rapidxml" variableNamingConvention="structured" numberOfEventIndicators="0">
+	<CoSimulation modelIdentifier="FMU2cs_PathFollowerDriver" canHandleVariableCommunicationStepSize="true" canInterpolateInputs="true" maxOutputDerivativeOrder="1" canGetAndSetFMUstate="false" canSerializeFMUstate="false" providesDirectionalDerivative="false"/>
+	<UnitDefinitions>
+		<Unit name="1">
+			<BaseUnit/>
+		</Unit>
+		<Unit name="">
+			<BaseUnit/>
+		</Unit>
+		<Unit name="m/s">
+			<BaseUnit m="1" s="-1"/>
+		</Unit>
+		<Unit name="s">
+			<BaseUnit s="1"/>
+		</Unit>
+		<Unit name="rad">
+			<BaseUnit rad="1"/>
+		</Unit>
+		<Unit name="m">
+			<BaseUnit m="1"/>
+		</Unit>
+	</UnitDefinitions>
+	<LogCategories>
+		<Category name="logEvents" description="NotDebugCategory"/>
+		<Category name="logAll" description="NotDebugCategory"/>
+		<Category name="logStatusWarning" description="DebugCategory"/>
+		<Category name="logSingularLinearSystems" description="NotDebugCategory"/>
+		<Category name="logNonlinearSystems" description="NotDebugCategory"/>
+		<Category name="logDynamicStateSelection" description="NotDebugCategory"/>
+		<Category name="logStatusError" description="DebugCategory"/>
+		<Category name="logStatusPending" description="DebugCategory"/>
+		<Category name="logStatusDiscard" description="DebugCategory"/>
+		<Category name="logStatusFatal" description="DebugCategory"/>
+	</LogCategories>
+	<DefaultExperiment startTime="0.000000" stopTime="1.000000" stepSize="0.001000"/>
+	<ModelVariables>
+		<!--Index: 1-->
+		<ScalarVariable name="time" valueReference="1" description="time" causality="independent">
+			<Real unit="s"/>
+		</ScalarVariable>
+		<!--Index: 2-->
+		<ScalarVariable name="look_ahead_dist" valueReference="2" description="lookahead distance, steering controller" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="1" start="5.000000"/>
+		</ScalarVariable>
+		<!--Index: 3-->
+		<ScalarVariable name="Kp_steering" valueReference="3" description="proportional gain, steering controller" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="1" start="0.800000"/>
+		</ScalarVariable>
+		<!--Index: 4-->
+		<ScalarVariable name="Ki_steering" valueReference="4" description="integral gain, steering controller" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 5-->
+		<ScalarVariable name="Kd_steering" valueReference="5" description="derivative gain, steering controller" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 6-->
+		<ScalarVariable name="throttle_threshold" valueReference="6" description="threshold for throttle/brake control, speed controller" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="1" start="0.200000"/>
+		</ScalarVariable>
+		<!--Index: 7-->
+		<ScalarVariable name="Kp_speed" valueReference="7" description="proportional gain, speed controller" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="1" start="0.400000"/>
+		</ScalarVariable>
+		<!--Index: 8-->
+		<ScalarVariable name="Ki_speed" valueReference="8" description="integral gain, speed controller" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 9-->
+		<ScalarVariable name="Kd_speed" valueReference="9" description="derivative gain, speed controller" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 10-->
+		<ScalarVariable name="step_size" valueReference="10" description="integration step size" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="s" start="0.001000"/>
+		</ScalarVariable>
+		<!--Index: 11-->
+		<ScalarVariable name="fps" valueReference="11" description="rendering frequency" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="1" start="60.000000"/>
+		</ScalarVariable>
+		<!--Index: 12-->
+		<ScalarVariable name="init_loc.x" valueReference="12" description="location of first path point (x)" causality="output" variability="constant" initial="exact">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 13-->
+		<ScalarVariable name="init_loc.y" valueReference="13" description="location of first path point (y)" causality="output" variability="constant" initial="exact">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 14-->
+		<ScalarVariable name="init_loc.z" valueReference="14" description="location of first path point (z)" causality="output" variability="constant" initial="exact">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 15-->
+		<ScalarVariable name="init_yaw" valueReference="15" description="orientation of first path segment" causality="output" variability="constant" initial="exact">
+			<Real unit="rad" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 16-->
+		<ScalarVariable name="ref_frame.pos.x" valueReference="16" description="reference frame position (x)" causality="input">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 17-->
+		<ScalarVariable name="ref_frame.pos.y" valueReference="17" description="reference frame position (y)" causality="input">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 18-->
+		<ScalarVariable name="ref_frame.pos.z" valueReference="18" description="reference frame position (z)" causality="input">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 19-->
+		<ScalarVariable name="ref_frame.rot.e0" valueReference="19" description="reference frame orientation (e0)" causality="input">
+			<Real unit="1" start="1.000000"/>
+		</ScalarVariable>
+		<!--Index: 20-->
+		<ScalarVariable name="ref_frame.rot.e1" valueReference="20" description="reference frame orientation (e1)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 21-->
+		<ScalarVariable name="ref_frame.rot.e2" valueReference="21" description="reference frame orientation (e2)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 22-->
+		<ScalarVariable name="ref_frame.rot.e3" valueReference="22" description="reference frame orientation (e3)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 23-->
+		<ScalarVariable name="ref_frame.pos_dt.x" valueReference="23" description="reference frame position derivative (x)" causality="input">
+			<Real unit="m/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 24-->
+		<ScalarVariable name="ref_frame.pos_dt.y" valueReference="24" description="reference frame position derivative (y)" causality="input">
+			<Real unit="m/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 25-->
+		<ScalarVariable name="ref_frame.pos_dt.z" valueReference="25" description="reference frame position derivative (z)" causality="input">
+			<Real unit="m/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 26-->
+		<ScalarVariable name="ref_frame.rot_dt.e0" valueReference="26" description="reference frame orientation derivative (e0)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 27-->
+		<ScalarVariable name="ref_frame.rot_dt.e1" valueReference="27" description="reference frame orientation derivative (e1)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 28-->
+		<ScalarVariable name="ref_frame.rot_dt.e2" valueReference="28" description="reference frame orientation derivative (e2)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 29-->
+		<ScalarVariable name="ref_frame.rot_dt.e3" valueReference="29" description="reference frame orientation derivative (e3)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 30-->
+		<ScalarVariable name="target_speed" valueReference="30" description="target speed" causality="input">
+			<Real unit="m/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 31-->
+		<ScalarVariable name="steering" valueReference="31" description="steering command" causality="output" initial="exact">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 32-->
+		<ScalarVariable name="throttle" valueReference="32" description="throttle command" causality="output" initial="exact">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 33-->
+		<ScalarVariable name="braking" valueReference="33" description="braking command" causality="output" initial="exact">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 34-->
+		<ScalarVariable name="save_img" valueReference="1" description="trigger saving images" causality="input" variability="discrete">
+			<Boolean start="0"/>
+		</ScalarVariable>
+		<!--Index: 35-->
+		<ScalarVariable name="path_file" valueReference="1" description="path specififcation file" causality="parameter" variability="fixed" initial="exact">
+			<String start="E:\Repository\chrono\build_fmi\bin\vehicleFMU\FMU2cs_PathFollowerDriver\binaries\win64/../../resources/ISO_double_lane_change.txt"/>
+		</ScalarVariable>
+		<!--Index: 36-->
+		<ScalarVariable name="out_path" valueReference="2" description="output directory" causality="parameter" variability="fixed" initial="exact">
+			<String start="."/>
+		</ScalarVariable>
+	</ModelVariables>
+	<ModelStructure>
+		<Outputs>
+			<Unknown index="12"/>
+			<Unknown index="13"/>
+			<Unknown index="14"/>
+			<Unknown index="15"/>
+			<Unknown index="31"/>
+			<Unknown index="32"/>
+			<Unknown index="33"/>
+		</Outputs>
+	</ModelStructure>
+</fmiModelDescription>
+

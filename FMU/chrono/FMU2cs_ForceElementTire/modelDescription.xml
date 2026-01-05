@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" fmiVersion="2.0" modelName="FMU2cs_ForceElementTire" guid="a85c5fcd-fa5c-590a-9f68-0b71eb3d2bf1" generationTool="rapidxml" variableNamingConvention="structured" numberOfEventIndicators="0">
+	<CoSimulation modelIdentifier="FMU2cs_ForceElementTire" canHandleVariableCommunicationStepSize="true" canInterpolateInputs="true" maxOutputDerivativeOrder="1" canGetAndSetFMUstate="false" canSerializeFMUstate="false" providesDirectionalDerivative="false"/>
+	<UnitDefinitions>
+		<Unit name="Nm">
+			<BaseUnit kg="1" m="2" s="-2"/>
+		</Unit>
+		<Unit name="1">
+			<BaseUnit/>
+		</Unit>
+		<Unit name="">
+			<BaseUnit/>
+		</Unit>
+		<Unit name="rad/s">
+			<BaseUnit s="-1" rad="1"/>
+		</Unit>
+		<Unit name="m/s">
+			<BaseUnit m="1" s="-1"/>
+		</Unit>
+		<Unit name="s">
+			<BaseUnit s="1"/>
+		</Unit>
+		<Unit name="m">
+			<BaseUnit m="1"/>
+		</Unit>
+		<Unit name="N">
+			<BaseUnit kg="1" m="1" s="-2"/>
+		</Unit>
+	</UnitDefinitions>
+	<LogCategories>
+		<Category name="logEvents" description="NotDebugCategory"/>
+		<Category name="logAll" description="NotDebugCategory"/>
+		<Category name="logStatusWarning" description="DebugCategory"/>
+		<Category name="logSingularLinearSystems" description="NotDebugCategory"/>
+		<Category name="logNonlinearSystems" description="NotDebugCategory"/>
+		<Category name="logDynamicStateSelection" description="NotDebugCategory"/>
+		<Category name="logStatusError" description="DebugCategory"/>
+		<Category name="logStatusPending" description="DebugCategory"/>
+		<Category name="logStatusDiscard" description="DebugCategory"/>
+		<Category name="logStatusFatal" description="DebugCategory"/>
+	</LogCategories>
+	<DefaultExperiment startTime="0.000000" stopTime="1.000000" stepSize="0.001000"/>
+	<ModelVariables>
+		<!--Index: 1-->
+		<ScalarVariable name="time" valueReference="1" description="time" causality="independent">
+			<Real unit="s"/>
+		</ScalarVariable>
+		<!--Index: 2-->
+		<ScalarVariable name="step_size" valueReference="2" description="integration step size" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="s" start="0.001000"/>
+		</ScalarVariable>
+		<!--Index: 3-->
+		<ScalarVariable name="wheel_state.pos.x" valueReference="3" description="wheel position (x)" causality="input">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 4-->
+		<ScalarVariable name="wheel_state.pos.y" valueReference="4" description="wheel position (y)" causality="input">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 5-->
+		<ScalarVariable name="wheel_state.pos.z" valueReference="5" description="wheel position (z)" causality="input">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 6-->
+		<ScalarVariable name="wheel_state.rot.e0" valueReference="6" description="wheel rotation (e0)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 7-->
+		<ScalarVariable name="wheel_state.rot.e1" valueReference="7" description="wheel rotation (e1)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 8-->
+		<ScalarVariable name="wheel_state.rot.e2" valueReference="8" description="wheel rotation (e2)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 9-->
+		<ScalarVariable name="wheel_state.rot.e3" valueReference="9" description="wheel rotation (e3)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 10-->
+		<ScalarVariable name="wheel_state.lin_vel.x" valueReference="10" description="wheel linear velocity (x)" causality="input">
+			<Real unit="m/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 11-->
+		<ScalarVariable name="wheel_state.lin_vel.y" valueReference="11" description="wheel linear velocity (y)" causality="input">
+			<Real unit="m/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 12-->
+		<ScalarVariable name="wheel_state.lin_vel.z" valueReference="12" description="wheel linear velocity (z)" causality="input">
+			<Real unit="m/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 13-->
+		<ScalarVariable name="wheel_state.ang_vel.x" valueReference="13" description="wheel angular velocity (x)" causality="input">
+			<Real unit="rad/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 14-->
+		<ScalarVariable name="wheel_state.ang_vel.y" valueReference="14" description="wheel angular velocity (y)" causality="input">
+			<Real unit="rad/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 15-->
+		<ScalarVariable name="wheel_state.ang_vel.z" valueReference="15" description="wheel angular velocity (z)" causality="input">
+			<Real unit="rad/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 16-->
+		<ScalarVariable name="wheel_load.point.x" valueReference="16" description="wheel load application point (x)" causality="output" initial="exact">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 17-->
+		<ScalarVariable name="wheel_load.point.y" valueReference="17" description="wheel load application point (y)" causality="output" initial="exact">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 18-->
+		<ScalarVariable name="wheel_load.point.z" valueReference="18" description="wheel load application point (z)" causality="output" initial="exact">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 19-->
+		<ScalarVariable name="wheel_load.force.x" valueReference="19" description="wheel load applied force (x)" causality="output" initial="exact">
+			<Real unit="N" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 20-->
+		<ScalarVariable name="wheel_load.force.y" valueReference="20" description="wheel load applied force (y)" causality="output" initial="exact">
+			<Real unit="N" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 21-->
+		<ScalarVariable name="wheel_load.force.z" valueReference="21" description="wheel load applied force (z)" causality="output" initial="exact">
+			<Real unit="N" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 22-->
+		<ScalarVariable name="wheel_load.moment.x" valueReference="22" description="wheel load applied moment (x)" causality="output" initial="exact">
+			<Real unit="Nm" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 23-->
+		<ScalarVariable name="wheel_load.moment.y" valueReference="23" description="wheel load applied moment (y)" causality="output" initial="exact">
+			<Real unit="Nm" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 24-->
+		<ScalarVariable name="wheel_load.moment.z" valueReference="24" description="wheel load applied moment (z)" causality="output" initial="exact">
+			<Real unit="Nm" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 25-->
+		<ScalarVariable name="query_point.x" valueReference="25" description="terrain query point (x)" causality="output" initial="exact">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 26-->
+		<ScalarVariable name="query_point.y" valueReference="26" description="terrain query point (y)" causality="output" initial="exact">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 27-->
+		<ScalarVariable name="query_point.z" valueReference="27" description="terrain query point (z)" causality="output" initial="exact">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 28-->
+		<ScalarVariable name="terrain_height" valueReference="28" description="terrain height" causality="input">
+			<Real unit="m" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 29-->
+		<ScalarVariable name="terrain_normal.x" valueReference="29" description="terrain normal (x)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 30-->
+		<ScalarVariable name="terrain_normal.y" valueReference="30" description="terrain normal (y)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 31-->
+		<ScalarVariable name="terrain_normal.z" valueReference="31" description="terrain normal (z)" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 32-->
+		<ScalarVariable name="terrain_mu" valueReference="32" description="terrain friction coefficient" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 33-->
+		<ScalarVariable name="tire_JSON" valueReference="1" description="tire JSON" causality="parameter" variability="fixed" initial="exact">
+			<String start="E:\Repository\chrono\build_fmi\bin\vehicleFMU\FMU2cs_ForceElementTire\binaries\win64/../../resources/TMeasyTire.json"/>
+		</ScalarVariable>
+		<!--Index: 34-->
+		<ScalarVariable name="out_path" valueReference="2" description="output directory" causality="parameter" variability="fixed" initial="exact">
+			<String start="."/>
+		</ScalarVariable>
+	</ModelVariables>
+	<ModelStructure>
+		<Outputs>
+			<Unknown index="16"/>
+			<Unknown index="17"/>
+			<Unknown index="18"/>
+			<Unknown index="19"/>
+			<Unknown index="20"/>
+			<Unknown index="21"/>
+			<Unknown index="22"/>
+			<Unknown index="23"/>
+			<Unknown index="24"/>
+			<Unknown index="25"/>
+			<Unknown index="26"/>
+			<Unknown index="27"/>
+		</Outputs>
+	</ModelStructure>
+</fmiModelDescription>
+

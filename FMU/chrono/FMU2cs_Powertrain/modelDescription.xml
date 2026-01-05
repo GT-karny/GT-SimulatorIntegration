@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" fmiVersion="2.0" modelName="FMU2cs_Powertrain" guid="008d1d23-f13c-56c5-813a-6d229a7f9d99" generationTool="rapidxml" variableNamingConvention="structured" numberOfEventIndicators="0">
+	<CoSimulation modelIdentifier="FMU2cs_Powertrain" canHandleVariableCommunicationStepSize="true" canInterpolateInputs="true" maxOutputDerivativeOrder="1" canGetAndSetFMUstate="false" canSerializeFMUstate="false" providesDirectionalDerivative="false"/>
+	<UnitDefinitions>
+		<Unit name="Nm">
+			<BaseUnit kg="1" m="2" s="-2"/>
+		</Unit>
+		<Unit name="1">
+			<BaseUnit/>
+		</Unit>
+		<Unit name="">
+			<BaseUnit/>
+		</Unit>
+		<Unit name="rad/s">
+			<BaseUnit s="-1" rad="1"/>
+		</Unit>
+		<Unit name="s">
+			<BaseUnit s="1"/>
+		</Unit>
+	</UnitDefinitions>
+	<LogCategories>
+		<Category name="logEvents" description="NotDebugCategory"/>
+		<Category name="logAll" description="NotDebugCategory"/>
+		<Category name="logStatusWarning" description="DebugCategory"/>
+		<Category name="logSingularLinearSystems" description="NotDebugCategory"/>
+		<Category name="logNonlinearSystems" description="NotDebugCategory"/>
+		<Category name="logDynamicStateSelection" description="NotDebugCategory"/>
+		<Category name="logStatusError" description="DebugCategory"/>
+		<Category name="logStatusPending" description="DebugCategory"/>
+		<Category name="logStatusDiscard" description="DebugCategory"/>
+		<Category name="logStatusFatal" description="DebugCategory"/>
+	</LogCategories>
+	<DefaultExperiment startTime="0.000000" stopTime="1.000000" stepSize="0.001000"/>
+	<ModelVariables>
+		<!--Index: 1-->
+		<ScalarVariable name="time" valueReference="1" description="time" causality="independent">
+			<Real unit="s"/>
+		</ScalarVariable>
+		<!--Index: 2-->
+		<ScalarVariable name="step_size" valueReference="2" description="integration step size" causality="parameter" variability="fixed" initial="exact">
+			<Real unit="s" start="0.001000"/>
+		</ScalarVariable>
+		<!--Index: 3-->
+		<ScalarVariable name="throttle" valueReference="3" description="throttle input" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 4-->
+		<ScalarVariable name="clutch" valueReference="4" description="clutch input" causality="input">
+			<Real unit="1" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 5-->
+		<ScalarVariable name="engine_reaction" valueReference="5" description="engine reaction torque" causality="output" initial="exact">
+			<Real unit="Nm" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 6-->
+		<ScalarVariable name="transmission_reaction" valueReference="6" description="transmission reaction torque" causality="output" initial="exact">
+			<Real unit="Nm" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 7-->
+		<ScalarVariable name="driveshaft_speed" valueReference="7" description="driveshaft angular speed" causality="input">
+			<Real unit="rad/s" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 8-->
+		<ScalarVariable name="driveshaft_torque" valueReference="8" description="driveshaft motor torque" causality="output" initial="exact">
+			<Real unit="Nm" start="0.000000"/>
+		</ScalarVariable>
+		<!--Index: 9-->
+		<ScalarVariable name="engine_JSON" valueReference="1" description="engine JSON" causality="parameter" variability="fixed" initial="exact">
+			<String start="E:\Repository\chrono\build_fmi\bin\vehicleFMU\FMU2cs_Powertrain\binaries\win64/../../resources/EngineShafts.json"/>
+		</ScalarVariable>
+		<!--Index: 10-->
+		<ScalarVariable name="transmission_JSON" valueReference="2" description="transmission JSON" causality="parameter" variability="fixed" initial="exact">
+			<String start="E:\Repository\chrono\build_fmi\bin\vehicleFMU\FMU2cs_Powertrain\binaries\win64/../../resources/AutomaticTransmissionShafts.json"/>
+		</ScalarVariable>
+		<!--Index: 11-->
+		<ScalarVariable name="out_path" valueReference="3" description="output directory" causality="parameter" variability="fixed" initial="exact">
+			<String start="."/>
+		</ScalarVariable>
+	</ModelVariables>
+	<ModelStructure>
+		<Outputs>
+			<Unknown index="5"/>
+			<Unknown index="6"/>
+			<Unknown index="8"/>
+		</Outputs>
+	</ModelStructure>
+</fmiModelDescription>
+
