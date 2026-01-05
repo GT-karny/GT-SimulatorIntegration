@@ -34,3 +34,10 @@ target_link_libraries(chrono_demo PRIVATE ${FMILIB_LIBRARY} Shlwapi)
 # Copy FMUs to build directory for easy access (optional but helpful)
 # We might need to copy the whole FMU folder structure to run the demo correctly
 # For now, we assume the user/developer runs the executable from a location where paths are valid or updates paths in code.
+
+# Copy config file to build directory (Post-build to handle Release/Debug folders)
+add_custom_command(TARGET chrono_demo POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/demo_config.json"
+    "$<TARGET_FILE_DIR:chrono_demo>/demo_config.json"
+)

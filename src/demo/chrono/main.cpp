@@ -8,9 +8,6 @@
 // Hardcoded paths for demo purposes - in a real app these might be args
 // Assuming running from build directory or referencing fixed paths relative to repository root
 
-const std::string CHRONO_FMU_DIR = "../../../../../FMU/chrono/"; 
-const std::string UNPACK_DIR_BASE = "./tmp_unpack/";
-
 // Helper for vector/quat names since they are expanded in FMI
 struct Vec3Vars { std::string x, y, z; };
 struct QuatVars { std::string e0, e1, e2, e3; };
@@ -42,24 +39,37 @@ void GetQuatVariable(FmuHelper& fmu, const std::string& prefix, double* q) {
 }
 
 
+#include "DemoConfiguration.h"
+
 int main(int argc, char* argv[]) {
     // -------------------------------------------------------------------------
     // Configuration
     // -------------------------------------------------------------------------
-    double step_size = 2e-3;
-    double start_time = 0.0;
-    double t_end = 15.0; // Shorten for demo?
+    DemoConfiguration config;
+    if (!config.Load("demo_config.json")) {
+        std::cerr << "Error: Could not load demo_config.json" << std::endl;
+        return 1;
+    }
+
+    double step_size = config.GetDouble("simulation.step_size", 2e-3);
+    double start_time = config.GetDouble("simulation.start_time", 0.0);
+    double t_end = config.GetDouble("simulation.end_time", 15.0);
     
-    // FMU Filenames
-    std::string vehicle_fmu_file = std::filesystem::absolute(CHRONO_FMU_DIR + "FMU2cs_WheeledVehicle/FMU2cs_WheeledVehicle.fmu").string();
-    std::string powertrain_fmu_file = std::filesystem::absolute(CHRONO_FMU_DIR + "FMU2cs_Powertrain/FMU2cs_Powertrain.fmu").string();
-    std::string driver_fmu_file = std::filesystem::absolute(CHRONO_FMU_DIR + "FMU2cs_PathFollowerDriver/FMU2cs_PathFollowerDriver.fmu").string();
-    std::string tire_fmu_file = std::filesystem::absolute(CHRONO_FMU_DIR + "FMU2cs_ForceElementTire/FMU2cs_ForceElementTire.fmu").string();
-    std::string terrain_fmu_file = std::filesystem::absolute(CHRONO_FMU_DIR + "FMU2cs_Terrain/FMU2cs_Terrain.fmu").string();
+    // FMU Filenames & Paths
+    // Helper to get absolute path from config or default
+    auto get_abs_path = [&](const std::string& key) {
+        std::string p = config.GetString(key, "");
+        if(p.empty()) throw std::runtime_error("Missing config: " + key);
+        return std::filesystem::absolute(p).string();
+    };
 
-    std::string unpack_base_abs = std::filesystem::absolute(UNPACK_DIR_BASE).string();
+    std::string vehicle_fmu_file = get_abs_path("vehicle.fmu_path");
+    std::string powertrain_fmu_file = get_abs_path("powertrain.fmu_path");
+    std::string driver_fmu_file = get_abs_path("driver.fmu_path");
+    std::string tire_fmu_file = get_abs_path("tire.fmu_path");
+    std::string terrain_fmu_file = get_abs_path("terrain.fmu_path");
 
-    // Absolute paths might be safer, checking existance
+    // Check existence
     if (!std::filesystem::exists(vehicle_fmu_file)) {
         std::cerr << "Error: FMU not found at " << vehicle_fmu_file << std::endl;
         return 1;
@@ -76,19 +86,27 @@ int main(int argc, char* argv[]) {
             if (!std::filesystem::exists(path)) std::filesystem::create_directories(path);
         };
 
-        ensure_dir(unpack_base_abs + "vehicle");
-        ensure_dir(unpack_base_abs + "powertrain");
-        ensure_dir(unpack_base_abs + "driver");
+        std::string v_unpack = std::filesystem::absolute(config.GetString("vehicle.unpack_dir", "./tmp")).string();
+        std::string p_unpack = std::filesystem::absolute(config.GetString("powertrain.unpack_dir", "./tmp")).string();
+        std::string d_unpack = std::filesystem::absolute(config.GetString("driver.unpack_dir", "./tmp")).string();
 
-        FmuHelper vehicle_fmu("WheeledVehicleFMU", vehicle_fmu_file, unpack_base_abs + "vehicle");
-        FmuHelper powertrain_fmu("PowertrainFMU", powertrain_fmu_file, unpack_base_abs + "powertrain");
-        FmuHelper driver_fmu("DriverFMU", driver_fmu_file, unpack_base_abs + "driver");
+        ensure_dir(v_unpack);
+        ensure_dir(p_unpack);
+        ensure_dir(d_unpack);
+
+        FmuHelper vehicle_fmu("WheeledVehicleFMU", vehicle_fmu_file, v_unpack);
+        FmuHelper powertrain_fmu("PowertrainFMU", powertrain_fmu_file, p_unpack);
+        FmuHelper driver_fmu("DriverFMU", driver_fmu_file, d_unpack);
 
         std::vector<FmuHelper*> tires;
         std::vector<FmuHelper*> terrains;
+        
+        std::string t_prefix = config.GetString("tire.unpack_dir_prefix", "./tmp_tire_");
+        std::string tr_prefix = config.GetString("terrain.unpack_dir_prefix", "./tmp_terrain_");
+
         for(int i=0; i<4; ++i) {
-            std::string t_dir = unpack_base_abs + "tire_" + std::to_string(i);
-            std::string tr_dir = unpack_base_abs + "terrain_" + std::to_string(i);
+            std::string t_dir = std::filesystem::absolute(t_prefix + std::to_string(i)).string();
+            std::string tr_dir = std::filesystem::absolute(tr_prefix + std::to_string(i)).string();
             ensure_dir(t_dir);
             ensure_dir(tr_dir);
             tires.push_back(new FmuHelper("TireFMU_" + std::to_string(i), tire_fmu_file, t_dir));
@@ -102,41 +120,37 @@ int main(int argc, char* argv[]) {
         for(auto t : terrains) t->Instantiate();
 
         // ---------------------------------------------------------------------
-        // 2. Setup Parameters using reference logic
+        // 2. Setup Parameters
         // ---------------------------------------------------------------------
         std::cout << "Setting up parameters..." << std::endl;
         
-        std::string chrono_data_path = "../../../../../thirdparty/chrono/data/vehicle/"; 
-        
-        // Vehicle
-        vehicle_fmu.SetVariable("data_path", chrono_data_path);
-        // Assuming JSONs inside chrono_data_path
-        vehicle_fmu.SetVariable("vehicle_JSON", chrono_data_path + "hmmwv/vehicle/HMMWV_Vehicle.json"); 
-        vehicle_fmu.SetVariable("step_size", step_size);
+        // Helper to set params from config map
+        auto set_params_from_config = [&](FmuHelper& fmu, const std::string& config_root) {
+            // Apply step step_size globally or per component? 
+            // Demo requirement: usually they share step size or specified.
+            // Using global step_size if not specified
+             fmu.SetVariable("step_size", config.GetDouble(config_root + ".parameters.step_size", step_size));
 
-        // Powertrain
-        powertrain_fmu.SetVariable("engine_JSON", chrono_data_path + "hmmwv/powertrain/HMMWV_EngineSimpleMap.json");
-        powertrain_fmu.SetVariable("transmission_JSON", chrono_data_path + "hmmwv/powertrain/HMMWV_AutomaticTransmissionSimpleMap.json");
+            auto val = config.Get(config_root + ".parameters");
+            if (val.type == MiniJSON::Type::Object) {
+                for(auto& [key, v] : val.o_val) {
+                    if (key == "step_size") continue; // handled above with fallback
+                    if (v.type == MiniJSON::Type::String) fmu.SetVariable(key, v.s_val);
+                    else if (v.type == MiniJSON::Type::Number) fmu.SetVariable(key, v.n_val);
+                    else if (v.type == MiniJSON::Type::Boolean) fmu.SetVariable(key, v.b_val);
+                }
+            }
+        };
 
-        // Driver
-        driver_fmu.SetVariable("path_file", chrono_data_path + "paths/ISO_double_lane_change.txt");
-        driver_fmu.SetVariable("throttle_threshold", 0.2);
-        driver_fmu.SetVariable("look_ahead_dist", 5.0);
-        driver_fmu.SetVariable("step_size", step_size);
+        set_params_from_config(vehicle_fmu, "vehicle");
+        set_params_from_config(powertrain_fmu, "powertrain");
+        set_params_from_config(driver_fmu, "driver");
 
-        // Tires
-        for(auto t : tires) {
-            t->SetVariable("tire_JSON", chrono_data_path + "hmmwv/tire/HMMWV_TMeasyTire.json");
-        }
-
-        // Terrains
+        for(auto t : tires) set_params_from_config(*t, "tire");
         for(auto t : terrains) {
-            // Error: variable of type Boolean with value reference 1 does NOT exist.
-            // Standard Terrain FMU might not expose these as variables or names mismatch.
-            // Commenting out to check if defaults work.
-            // t->SetVariable("terrain_type", "Flat"); 
-            // t->SetVariable("friction", 0.8);
-            // t->SetVariable("step_size", step_size);
+            // Special handling for Terrain FMU which might not have standard parameters exposed yet?
+            // Re-enabling based on user request to be configurable.
+            set_params_from_config(*t, "terrain");
         }
 
         // ---------------------------------------------------------------------
