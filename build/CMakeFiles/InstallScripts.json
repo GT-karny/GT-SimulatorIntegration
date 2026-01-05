@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"E:/Repository/GT-karny/GT-SimulatorIntegration/build/cmake_install.cmake",
-		"E:/Repository/GT-karny/GT-SimulatorIntegration/build/src/demo/chrono/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
