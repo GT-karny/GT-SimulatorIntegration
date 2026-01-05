@@ -9,7 +9,8 @@
         "unpack_dir": "./tmp_unpack/vehicle",
         "parameters": {
             "data_path": "../../../../../thirdparty/chrono/data/vehicle/",
-            "vehicle_JSON": "../../../../../thirdparty/chrono/data/vehicle/hmmwv/vehicle/HMMWV_Vehicle.json"
+            "vehicle_JSON": "../../../../../thirdparty/chrono/data/vehicle/hmmwv/vehicle/HMMWV_Vehicle.json",
+            "init_speed": 0.0
         }
     },
     "powertrain": {

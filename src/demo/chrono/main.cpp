@@ -197,7 +197,6 @@ int main(int argc, char* argv[]) {
 
         while (time < t_end) {
             // --- Driver Control ---
-            driver_fmu.SetVariable("target_speed", 12.0);
 
             double steering, throttle, braking;
             driver_fmu.GetVariable("steering", steering);
