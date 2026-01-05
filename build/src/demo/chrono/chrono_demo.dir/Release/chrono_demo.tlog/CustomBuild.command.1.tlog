@@ -1,0 +1,10 @@
+^E:\REPOSITORY\GT-KARNY\GT-SIMULATORINTEGRATION\SRC\DEMO\CHRONO\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Repository/GT-karny/GT-SimulatorIntegration -BE:/Repository/GT-karny/GT-SimulatorIntegration/build --check-stamp-file E:/Repository/GT-karny/GT-SimulatorIntegration/build/src/demo/chrono/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

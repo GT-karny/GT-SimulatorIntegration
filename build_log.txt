@@ -1,0 +1,16 @@
+CMake is re-running because E:/Repository/GT-karny/GT-SimulatorIntegration/build/src/demo/chrono/CMakeFiles/generate.stamp is out-of-date.
+  the file 'E:/Repository/GT-karny/GT-SimulatorIntegration/src/demo/chrono/CMakeLists.txt'
+  is newer than 'E:/Repository/GT-karny/GT-SimulatorIntegration/build/src/demo/chrono/CMakeFiles/generate.stamp.depend'
+  result='-1'
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.26200.
+-- Configuring done (0.0s)
+-- Generating done (0.1s)
+-- Build files have been written to: E:/Repository/GT-karny/GT-SimulatorIntegration/build
+MSBuild 縺ｮ繝舌・繧ｸ繝ｧ繝ｳ 17.14.23+b0019275e (.NET Framework)
+
+  main.cpp
+  FmuHelper.cpp
+  繧ｳ繝ｼ繝峨ｒ逕滓・荳ｭ...
+     繝ｩ繧､繝悶Λ繝ｪ E:/Repository/GT-karny/GT-SimulatorIntegration/build/src/demo/chrono/Release/chrono_demo.lib 縺ｨ繧ｪ繝悶ず繧ｧ繧ｯ繝・E:/Repository/GT-karny/GT-SimulatorIntegration/build/src/demo/chrono/Release/chrono_demo.exp 繧剃ｽ懈・荳ｭ
+  chrono_demo.vcxproj -> E:\Repository\GT-karny\GT-SimulatorIntegration\build\src\demo\chrono\Release\chrono_demo.exe
+  Building Custom Rule E:/Repository/GT-karny/GT-SimulatorIntegration/CMakeLists.txt
