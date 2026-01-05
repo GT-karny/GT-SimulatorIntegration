@@ -48,26 +48,37 @@ FmuHelper::FmuHelper(const std::string& instanceName, const std::string& fmuPath
     m_callbacks.stepFinished = nullptr;
     m_callbacks.componentEnvironment = nullptr;
 
+    printf("DEBUG: Allocating context for %s\n", m_instanceName.c_str());
     m_context = fmi_import_allocate_context(&m_jmCallbacks);
+    if (!m_context) {
+        printf("DEBUG: Failed to allocate context\n");
+        throw std::runtime_error("Failed to allocate context");
+    }
 
     // Unzip FMU
+    printf("DEBUG: Unzipping FMU %s to %s\n", m_fmuPath.c_str(), m_unzipDir.c_str());
     if (fmi_zip_unzip(m_fmuPath.c_str(), m_unzipDir.c_str(), &m_jmCallbacks) != jm_status_success) {
+        printf("DEBUG: Failed to unzip FMU\n");
         throw std::runtime_error("Failed to unzip FMU: " + m_fmuPath);
     }
+    printf("DEBUG: Unzip successful\n");
 
     // Parse model description
+    printf("DEBUG: Parsing XML\n");
     m_fmu = fmi2_import_parse_xml(m_context, m_unzipDir.c_str(), 0);
     if (!m_fmu) {
+        printf("DEBUG: Failed to parse XML\n");
         throw std::runtime_error("Failed to parse model description: " + m_fmuPath);
     }
-
-    // Check FMI version (optional but good practice)
-    // ...
+    printf("DEBUG: XML Parsed\n");
 
     // Load DLL
+    printf("DEBUG: Creating DLL FMU\n");
     if (fmi2_import_create_dllfmu(m_fmu, fmi2_fmu_kind_cs, &m_callbacks) != jm_status_success) {
+        printf("DEBUG: Failed to load DLL\n");
         throw std::runtime_error("Failed to load DLL for FMU: " + m_fmuPath);
     }
+    printf("DEBUG: DLL Loaded\n");
 }
 
 FmuHelper::~FmuHelper() {
@@ -181,4 +192,16 @@ std::string FmuHelper::GetVersion() const {
 
 std::string FmuHelper::GetTypesPlatform() const {
     return fmi2_import_get_types_platform(m_fmu);
+}
+
+void FmuHelper::DebugPrintVariables() {
+    printf("DEBUG: Variables for %s:\n", m_instanceName.c_str());
+    fmi2_import_variable_list_t* varList = fmi2_import_get_variable_list(m_fmu, 0);
+    size_t numVars = fmi2_import_get_variable_list_size(varList);
+    for (size_t i = 0; i < numVars; ++i) {
+        fmi2_import_variable_t* var = fmi2_import_get_variable(varList, i);
+        printf("  %s\n", fmi2_import_get_variable_name(var));
+    }
+    fmi2_import_free_variable_list(varList);
+    fflush(stdout);
 }

@@ -8,7 +8,7 @@
 // Hardcoded paths for demo purposes - in a real app these might be args
 // Assuming running from build directory or referencing fixed paths relative to repository root
 
-const std::string CHRONO_FMU_DIR = "../../../../FMU/chrono/"; 
+const std::string CHRONO_FMU_DIR = "../../../../../FMU/chrono/"; 
 const std::string UNPACK_DIR_BASE = "./tmp_unpack/";
 
 // Helper for vector/quat names since they are expanded in FMI
@@ -51,11 +51,13 @@ int main(int argc, char* argv[]) {
     double t_end = 15.0; // Shorten for demo?
     
     // FMU Filenames
-    std::string vehicle_fmu_file = CHRONO_FMU_DIR + "FMU2cs_WheeledVehicle/FMU2cs_WheeledVehicle.fmu";
-    std::string powertrain_fmu_file = CHRONO_FMU_DIR + "FMU2cs_Powertrain/FMU2cs_Powertrain.fmu";
-    std::string driver_fmu_file = CHRONO_FMU_DIR + "FMU2cs_PathFollowerDriver/FMU2cs_PathFollowerDriver.fmu";
-    std::string tire_fmu_file = CHRONO_FMU_DIR + "FMU2cs_ForceElementTire/FMU2cs_ForceElementTire.fmu";
-    std::string terrain_fmu_file = CHRONO_FMU_DIR + "FMU2cs_Terrain/FMU2cs_Terrain.fmu";
+    std::string vehicle_fmu_file = std::filesystem::absolute(CHRONO_FMU_DIR + "FMU2cs_WheeledVehicle/FMU2cs_WheeledVehicle.fmu").string();
+    std::string powertrain_fmu_file = std::filesystem::absolute(CHRONO_FMU_DIR + "FMU2cs_Powertrain/FMU2cs_Powertrain.fmu").string();
+    std::string driver_fmu_file = std::filesystem::absolute(CHRONO_FMU_DIR + "FMU2cs_PathFollowerDriver/FMU2cs_PathFollowerDriver.fmu").string();
+    std::string tire_fmu_file = std::filesystem::absolute(CHRONO_FMU_DIR + "FMU2cs_ForceElementTire/FMU2cs_ForceElementTire.fmu").string();
+    std::string terrain_fmu_file = std::filesystem::absolute(CHRONO_FMU_DIR + "FMU2cs_Terrain/FMU2cs_Terrain.fmu").string();
+
+    std::string unpack_base_abs = std::filesystem::absolute(UNPACK_DIR_BASE).string();
 
     // Absolute paths might be safer, checking existance
     if (!std::filesystem::exists(vehicle_fmu_file)) {
@@ -69,15 +71,28 @@ int main(int argc, char* argv[]) {
         // ---------------------------------------------------------------------
         std::cout << "Instantiating FMUs..." << std::endl;
         
-        FmuHelper vehicle_fmu("WheeledVehicleFMU", vehicle_fmu_file, UNPACK_DIR_BASE + "vehicle");
-        FmuHelper powertrain_fmu("PowertrainFMU", powertrain_fmu_file, UNPACK_DIR_BASE + "powertrain");
-        FmuHelper driver_fmu("DriverFMU", driver_fmu_file, UNPACK_DIR_BASE + "driver");
+        // Ensure directories exist
+        auto ensure_dir = [](const std::string& path) {
+            if (!std::filesystem::exists(path)) std::filesystem::create_directories(path);
+        };
+
+        ensure_dir(unpack_base_abs + "vehicle");
+        ensure_dir(unpack_base_abs + "powertrain");
+        ensure_dir(unpack_base_abs + "driver");
+
+        FmuHelper vehicle_fmu("WheeledVehicleFMU", vehicle_fmu_file, unpack_base_abs + "vehicle");
+        FmuHelper powertrain_fmu("PowertrainFMU", powertrain_fmu_file, unpack_base_abs + "powertrain");
+        FmuHelper driver_fmu("DriverFMU", driver_fmu_file, unpack_base_abs + "driver");
 
         std::vector<FmuHelper*> tires;
         std::vector<FmuHelper*> terrains;
         for(int i=0; i<4; ++i) {
-            tires.push_back(new FmuHelper("TireFMU_" + std::to_string(i), tire_fmu_file, UNPACK_DIR_BASE + "tire_" + std::to_string(i)));
-            terrains.push_back(new FmuHelper("TerrainFMU_" + std::to_string(i), terrain_fmu_file, UNPACK_DIR_BASE + "terrain_" + std::to_string(i)));
+            std::string t_dir = unpack_base_abs + "tire_" + std::to_string(i);
+            std::string tr_dir = unpack_base_abs + "terrain_" + std::to_string(i);
+            ensure_dir(t_dir);
+            ensure_dir(tr_dir);
+            tires.push_back(new FmuHelper("TireFMU_" + std::to_string(i), tire_fmu_file, t_dir));
+            terrains.push_back(new FmuHelper("TerrainFMU_" + std::to_string(i), terrain_fmu_file, tr_dir));
         }
 
         vehicle_fmu.Instantiate();
@@ -91,7 +106,7 @@ int main(int argc, char* argv[]) {
         // ---------------------------------------------------------------------
         std::cout << "Setting up parameters..." << std::endl;
         
-        std::string chrono_data_path = "../../../../data/vehicle/"; // Adjust based on repo structure
+        std::string chrono_data_path = "../../../../../thirdparty/chrono/data/vehicle/"; 
         
         // Vehicle
         vehicle_fmu.SetVariable("data_path", chrono_data_path);
@@ -116,9 +131,12 @@ int main(int argc, char* argv[]) {
 
         // Terrains
         for(auto t : terrains) {
-            t->SetVariable("terrain_type", "Flat");
-            t->SetVariable("friction", 0.8);
-            t->SetVariable("step_size", step_size);
+            // Error: variable of type Boolean with value reference 1 does NOT exist.
+            // Standard Terrain FMU might not expose these as variables or names mismatch.
+            // Commenting out to check if defaults work.
+            // t->SetVariable("terrain_type", "Flat"); 
+            // t->SetVariable("friction", 0.8);
+            // t->SetVariable("step_size", step_size);
         }
 
         // ---------------------------------------------------------------------
@@ -178,26 +196,19 @@ int main(int argc, char* argv[]) {
             powertrain_fmu.SetVariable("throttle", throttle);
 
             // --- Vehicle State -> Driver ---
-            // "ref_frame" is a FrameMoving (pos, rot, lin_vel, ang_vel) = 3 + 4 + 3 + 3 = 13 doubles?
-            // Or usually defined as separate vectors/quats in FMU variables?
-            // The reference code used `GetFrameMovingVariable("ref_frame", ...)` which implies structure.
-            // FMUs flatten these. Typically `ref_frame.pos.x`, `ref_frame.rot.e0`, etc.
-            // Let's assume standard flattening naming convention.
+            // "ref_frame" is a FrameMoving.
+            // FMUs expose this as ref_frame.pos, ref_frame.rot, ref_frame.pos_dt, ref_frame.rot_dt
             
-            // Actually, for simplicity and lacking exact variable inspection, let's look at reference code again.
-            // It uses `GetFrameMovingVariable`. The internal Chrono FMU tools map this.
-            // We need to map `ref_frame.pos.x` etc manually if we can't inspect.
-            // Let's assume common structure:
-            double ref_pos[3], ref_rot[4], ref_lin_vel[3], ref_ang_vel[3];
+            double ref_pos[3], ref_rot[4], ref_pos_dt[3], ref_rot_dt[4];
             GetVecVariable(vehicle_fmu, "ref_frame.pos", ref_pos);
             GetQuatVariable(vehicle_fmu, "ref_frame.rot", ref_rot);
-            GetVecVariable(vehicle_fmu, "ref_frame.lin_vel", ref_lin_vel);
-            GetVecVariable(vehicle_fmu, "ref_frame.ang_vel", ref_ang_vel);
+            GetVecVariable(vehicle_fmu, "ref_frame.pos_dt", ref_pos_dt);
+            GetQuatVariable(vehicle_fmu, "ref_frame.rot_dt", ref_rot_dt);
 
             SetVecVariable(driver_fmu, "ref_frame.pos", ref_pos);
             SetQuatVariable(driver_fmu, "ref_frame.rot", ref_rot);
-            SetVecVariable(driver_fmu, "ref_frame.lin_vel", ref_lin_vel);
-            SetVecVariable(driver_fmu, "ref_frame.ang_vel", ref_ang_vel);
+            SetVecVariable(driver_fmu, "ref_frame.pos_dt", ref_pos_dt);
+            SetQuatVariable(driver_fmu, "ref_frame.rot_dt", ref_rot_dt);
 
 
             // --- Powertrain <-> Vehicle ---
@@ -269,7 +280,9 @@ int main(int argc, char* argv[]) {
             time += step_size;
             
             if (static_cast<int>(time * 1000) % 100 == 0) { // Print every 0.1s
-                 std::cout << "Time: " << time << " Speed: " << ref_lin_vel[0] << " Throttle: " << throttle << std::endl;
+                 // Use ref_pos_dt[0] as speed approx or sqrt(v*v)
+                 double speed = std::sqrt(ref_pos_dt[0]*ref_pos_dt[0] + ref_pos_dt[1]*ref_pos_dt[1] + ref_pos_dt[2]*ref_pos_dt[2]);
+                 std::cout << "Time: " << time << " Speed: " << speed << " Throttle: " << throttle << std::endl;
             }
         }
 

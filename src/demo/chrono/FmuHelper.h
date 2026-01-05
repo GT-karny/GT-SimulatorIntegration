@@ -34,6 +34,8 @@ public:
     // Helpers
     std::string GetVersion() const;
     std::string GetTypesPlatform() const;
+    // Debug
+    void DebugPrintVariables();
 
 private:
     void ParseModelDescription();
