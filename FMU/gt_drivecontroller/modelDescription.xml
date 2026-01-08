@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="GT-DriveController"
+  guid="{8c4e810f-3df3-4a00-8276-176fa3c9f000}"
+  description="FMI 2.0 Co-Simulation Controller with Embedded Python and OSI Input"
+  generationTool="GT-karny Hand-coded"
+  variableNamingConvention="structured">
+
+  <CoSimulation
+    modelIdentifier="GT_DriveController"
+    canHandleVariableCommunicationStepSize="true"
+    canInterpolateInputs="false"
+    maxOutputDerivativeOrder="0"
+    canRunAsynchronuously="false"
+    canBeInstantiatedOnlyOncePerProcess="false"
+    canNotUseMemoryManagementFunctions="true"
+    canGetAndSetFMUstate="false"
+    canSerializeFMUstate="false"
+    providesDirectionalDerivative="false">
+  </CoSimulation>
+
+  <LogCategories>
+    <Category name="FMI" />
+    <Category name="OSMP" />
+    <Category name="OSI" />
+  </LogCategories>
+
+  <ModelVariables>
+    <!-- OSI SensorView Pointer Inputs (Integers) -->
+    <!-- Index 1: OSI_SensorView_In_BaseLo -->
+    <ScalarVariable name="OSI_SensorView_In_BaseLo" valueReference="0" causality="input" variability="discrete">
+      <Integer start="0" />
+    </ScalarVariable>
+    
+    <!-- Index 2: OSI_SensorView_In_BaseHi -->
+    <ScalarVariable name="OSI_SensorView_In_BaseHi" valueReference="1" causality="input" variability="discrete">
+      <Integer start="0" />
+    </ScalarVariable>
+    
+    <!-- Index 3: OSI_SensorView_In_Size -->
+    <ScalarVariable name="OSI_SensorView_In_Size" valueReference="2" causality="input" variability="discrete">
+      <Integer start="0" />
+    </ScalarVariable>
+
+    <!-- Control Outputs (Reals) -->
+    <!-- Index 4: Throttle [0.0, 1.0] -->
+    <ScalarVariable name="Throttle" valueReference="3" causality="output" variability="continuous">
+      <Real start="0.0" />
+    </ScalarVariable>
+
+    <!-- Index 5: Brake [0.0, 1.0] -->
+    <ScalarVariable name="Brake" valueReference="4" causality="output" variability="continuous">
+      <Real start="0.0" />
+    </ScalarVariable>
+
+    <!-- Index 6: Steering [-1.0 (Right), 1.0 (Left)] -->
+    <ScalarVariable name="Steering" valueReference="5" causality="output" variability="continuous">
+      <Real start="0.0" />
+    </ScalarVariable>
+    
+    <!-- Other standard OSMP params (Optional/Placeholder) -->
+    <!-- Validity Boolean -->
+    <ScalarVariable name="valid" valueReference="6" causality="output" variability="discrete">
+       <Boolean start="true" />
+    </ScalarVariable>
+
+  </ModelVariables>
+
+  <ModelStructure>
+    <Outputs>
+      <Unknown index="4" />
+      <Unknown index="5" />
+      <Unknown index="6" />
+      <Unknown index="7" />
+    </Outputs>
+  </ModelStructure>
+
+</fmiModelDescription>
