@@ -6,3 +6,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Add subdirectory for demos
 add_subdirectory(src/demo/chrono)
+add_subdirectory(src/demo/esmini_drive_chrono)
