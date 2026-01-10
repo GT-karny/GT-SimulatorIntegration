@@ -147,9 +147,18 @@ int main(int argc, char* argv[]) {
             if (val.type == MiniJSON::Type::Object) {
                 for(auto& [key, v] : val.o_val) {
                     if (key == "step_size") continue;
-                    if (v.type == MiniJSON::Type::String) fmu.SetVariable(key, v.s_val);
-                    else if (v.type == MiniJSON::Type::Number) fmu.SetVariable(key, v.n_val);
-                    else if (v.type == MiniJSON::Type::Boolean) fmu.SetVariable(key, v.b_val);
+                    if (v.type == MiniJSON::Type::String) {
+                         fmu.SetVariable(key, v.s_val);
+                         std::cout << "[DEBUG] Set " << key << " = " << v.s_val << " (" << config_root << ")" << std::endl;
+                    }
+                    else if (v.type == MiniJSON::Type::Number) {
+                         fmu.SetVariable(key, v.n_val);
+                         std::cout << "[DEBUG] Set " << key << " = " << v.n_val << " (" << config_root << ")" << std::endl;
+                    }
+                    else if (v.type == MiniJSON::Type::Boolean) {
+                         fmu.SetVariable(key, v.b_val);
+                         std::cout << "[DEBUG] Set " << key << " = " << (v.b_val ? "true" : "false") << " (" << config_root << ")" << std::endl;
+                    }
                 }
             }
         };
@@ -181,12 +190,16 @@ int main(int argc, char* argv[]) {
         for(auto t : tires) t->EnterInitializationMode();
         for(auto t : terrains) t->EnterInitializationMode();
 
+        std::cout << "[TRACE] Calling esmini ExitInitializationMode..." << std::endl;
         esmini_fmu.ExitInitializationMode();
+        std::cout << "[TRACE] esmini ExitInitializationMode DONE." << std::endl;
+        
         drivecontroller_fmu.ExitInitializationMode();
         vehicle_fmu.ExitInitializationMode();
         powertrain_fmu.ExitInitializationMode();
         for(auto t : tires) t->ExitInitializationMode();
         for(auto t : terrains) t->ExitInitializationMode();
+        std::cout << "[DEBUG] All init done." << std::endl;
 
         // ---------------------------------------------------------------------
         // 4. Simulation Loop
@@ -206,6 +219,8 @@ int main(int argc, char* argv[]) {
             esmini_fmu.GetVariable("OSMPSensorViewOut.base.hi", osi_sv_hi);
             esmini_fmu.GetVariable("OSMPSensorViewOut.size", osi_sv_size);
 
+            std::cout << "[DEBUG] Step " << time << ": OSI size=" << osi_sv_size << std::endl;
+
             // Direct pointer transfer (same process)
             drivecontroller_fmu.SetVariable("OSI_SensorView_In_BaseLo", osi_sv_lo);
             drivecontroller_fmu.SetVariable("OSI_SensorView_In_BaseHi", osi_sv_hi);
@@ -219,33 +234,42 @@ int main(int argc, char* argv[]) {
             }
 
             // --- Step DriveController ---
+            std::cerr << "[TRACE] Stepping DriveController..." << std::endl;
             if(drivecontroller_fmu.DoStep(time, step_size) != fmi2_status_ok) {
                 std::cerr << "DriveController FMU step failed at time " << time << std::endl;
                 break;
             }
+            std::cout << "[DEBUG] DriveController Step OK" << std::endl;
 
             // --- DriveController -> Vehicle (Control Inputs) ---
             double throttle, brake, steering;
+            std::cout << "[DEBUG] Getting DriveController outputs..." << std::endl;
             drivecontroller_fmu.GetVariable("Throttle", throttle);
             drivecontroller_fmu.GetVariable("Brake", brake);
             drivecontroller_fmu.GetVariable("Steering", steering);
+            std::cout << "[DEBUG] Outputs: T=" << throttle << " B=" << brake << " S=" << steering << std::endl;
 
+            std::cout << "[DEBUG] Setting Vehicle inputs..." << std::endl;
             vehicle_fmu.SetVariable("steering", steering);
             vehicle_fmu.SetVariable("throttle", throttle);
             vehicle_fmu.SetVariable("braking", brake);
             powertrain_fmu.SetVariable("throttle", throttle);
+            std::cout << "[DEBUG] Vehicle inputs set." << std::endl;
 
             // --- Chrono Co-simulation (Vehicle <-> Powertrain <-> Tire <-> Terrain) ---
             
             // Powertrain <-> Vehicle
+            std::cout << "[DEBUG] Exchanging Powertrain variables..." << std::endl;
             double driveshaft_torque, driveshaft_speed;
             powertrain_fmu.GetVariable("driveshaft_torque", driveshaft_torque);
             vehicle_fmu.SetVariable("driveshaft_torque", driveshaft_torque);
 
             vehicle_fmu.GetVariable("driveshaft_speed", driveshaft_speed);
             powertrain_fmu.SetVariable("driveshaft_speed", driveshaft_speed);
+            std::cout << "[DEBUG] Powertrain exchanged." << std::endl;
 
             // Tires & Terrains
+            std::cout << "[DEBUG] Exchanging Wheel/Tire variables..." << std::endl;
             for(int i=0; i<4; ++i) {
                 // Vehicle -> Tire
                 double w_pos[3], w_rot[4], w_lin_vel[3], w_ang_vel[3];
@@ -289,15 +313,18 @@ int main(int argc, char* argv[]) {
             }
 
             // --- Step FMUs ---
+            std::cerr << "[TRACE] Stepping Vehicle..." << std::endl;
             if(vehicle_fmu.DoStep(time, step_size) != fmi2_status_ok) {
                 std::cerr << "Vehicle FMU step failed at time " << time << std::endl;
                 break;
             }
+            std::cerr << "[TRACE] Stepping Powertrain..." << std::endl;
             if(powertrain_fmu.DoStep(time, step_size) != fmi2_status_ok) {
                 std::cerr << "Powertrain FMU step failed at time " << time << std::endl;
                 break;
             }
             
+            std::cerr << "[TRACE] Stepping Tires..." << std::endl;
             for(auto t : tires) {
                 if(t->DoStep(time, step_size) != fmi2_status_ok) {
                     std::cerr << "Tire FMU step failed at time " << time << std::endl;
@@ -305,6 +332,7 @@ int main(int argc, char* argv[]) {
                 }
             }
 
+            std::cerr << "[TRACE] Stepping Esmini..." << std::endl;
             if(esmini_fmu.DoStep(time, step_size) != fmi2_status_ok) {
                 std::cerr << "Esmini FMU step failed at time " << time << std::endl;
                 break;

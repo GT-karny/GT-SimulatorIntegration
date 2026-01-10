@@ -9,7 +9,8 @@
         "unpack_dir": "./tmp_unpack/esmini",
         "parameters": {
             "xosc_path": "../../../../../thirdparty/esmini/resources/xosc/acc-test.xosc",
-            "use_viewer": false
+            "use_viewer": false,
+            "esmini_args": "--headless --fixed_timestep 0.01"
         }
     },
     "drivecontroller": {

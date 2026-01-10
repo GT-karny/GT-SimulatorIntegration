@@ -30,7 +30,18 @@ Python 3.12を埋め込んだFMI 2.0 Co-Simulation FMUで、OSI (Open Simulation
 | `Throttle` | 3 | Real | 0.0 ~ 1.0 | スロットル開度 |
 | `Brake` | 4 | Real | 0.0 ~ 1.0 | ブレーキ圧 |
 | `Steering` | 5 | Real | -1.0 ~ 1.0 | ステアリング角度（左が正） |
+| `OSI_SensorView_Out_BaseLo` | 7 | Integer | - | 出力OSIデータポインタの下位32ビット |
+| `OSI_SensorView_Out_BaseHi` | 8 | Integer | - | 出力OSIデータポインタの上位32ビット |
+| `OSI_SensorView_Out_Size` | 9 | Integer | - | 出力OSIデータのサイズ（バイト） |
+| `DriveMode` | 10 | Integer | 1, 0, -1 | 走行モード (1:Forward, 0:Neutral, -1:Reverse) |
 | `valid` | 6 | Boolean | - | 出力の有効性 |
+
+### パラメータ変数
+
+| 変数名 | Value Reference | 型 | デフォルト値 | 説明 |
+|--------|----------------|-----|------------|------|
+| `PythonScriptPath` | 11 | String | `resources/logic.py` | 実行するPythonスクリプトの相対パス |
+| `PythonDependencyPath` | 12 | String | "" | 追加のモジュール検索パス (`sys.path`) |
 
 ## 使用方法
 
@@ -74,7 +85,7 @@ class Controller:
         # 初期化処理をここに記述
         pass
     
-    def update_control(self, osi_data: bytes) -> list[float]:
+    def update_control(self, osi_data: bytes) -> list:
         """
         OSI SensorViewデータを処理し、制御出力を返す
         
@@ -82,14 +93,21 @@ class Controller:
             osi_data: シリアライズされたOSI SensorViewデータ（バイナリ）
         
         Returns:
-            [throttle, brake, steering] のリスト
+            [throttle, brake, steering, drive_mode, osi_output_bytes] のリスト
+            - throttle (float): 0.0 ~ 1.0
+            - brake (float): 0.0 ~ 1.0
+            - steering (float): -1.0 ~ 1.0
+            - drive_mode (int): 1:Forward, 0:Neutral, -1:Reverse
+            - osi_output_bytes (bytes): 出力用OSIデータ
         """
         # コントローラーロジックを実装
-        throttle = 0.0  # 0.0 ~ 1.0
-        brake = 0.0     # 0.0 ~ 1.0
-        steering = 0.0  # -1.0 ~ 1.0
+        throttle = 0.5
+        brake = 0.0
+        steering = 0.0
+        drive_mode = 1
+        osi_output_bytes = osi_data
         
-        return [throttle, brake, steering]
+        return [throttle, brake, steering, drive_mode, osi_output_bytes]
 ```
 
 ### OSIデータの解析例

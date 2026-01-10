@@ -94,7 +94,16 @@ FmuHelper::~FmuHelper() {
 }
 
 void FmuHelper::Instantiate(bool visible, bool loggingOn) {
-    if (fmi2_import_instantiate(m_fmu, m_instanceName.c_str(), fmi2_cosimulation, nullptr, visible) != jm_status_success) {
+    // Construct resource URI
+    // e.g. file:///C:/path/to/resources
+    std::string resourcePath = m_unzipDir + "/resources";
+    std::string uri = "file:///";
+    for (char c : resourcePath) {
+        if (c == '\\') uri += '/';
+        else uri += c;
+    }
+
+    if (fmi2_import_instantiate(m_fmu, m_instanceName.c_str(), fmi2_cosimulation, uri.c_str(), visible) != jm_status_success) {
         throw std::runtime_error("Failed to instantiate FMU: " + m_instanceName);
     }
 }

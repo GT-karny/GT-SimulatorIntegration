@@ -44,23 +44,54 @@
     </ScalarVariable>
 
     <!-- Control Outputs (Reals) -->
-    <!-- Index 4: Throttle [0.0, 1.0] -->
+    <!-- VR 3: Throttle [0.0, 1.0] -->
     <ScalarVariable name="Throttle" valueReference="3" causality="output" variability="continuous">
       <Real start="0.0" />
     </ScalarVariable>
 
-    <!-- Index 5: Brake [0.0, 1.0] -->
+    <!-- VR 4: Brake [0.0, 1.0] -->
     <ScalarVariable name="Brake" valueReference="4" causality="output" variability="continuous">
       <Real start="0.0" />
     </ScalarVariable>
 
-    <!-- Index 6: Steering [-1.0 (Right), 1.0 (Left)] -->
+    <!-- VR 5: Steering [-1.0, 1.0] -->
     <ScalarVariable name="Steering" valueReference="5" causality="output" variability="continuous">
       <Real start="0.0" />
     </ScalarVariable>
     
-    <!-- Other standard OSMP params (Optional/Placeholder) -->
-    <!-- Validity Boolean -->
+    <!-- OSI SensorView Pointer Outputs (Integers) -->
+    <!-- VR 7: OSI_SensorView_Out_BaseLo -->
+    <ScalarVariable name="OSI_SensorView_Out_BaseLo" valueReference="7" causality="output" variability="discrete">
+      <Integer />
+    </ScalarVariable>
+    
+    <!-- VR 8: OSI_SensorView_Out_BaseHi -->
+    <ScalarVariable name="OSI_SensorView_Out_BaseHi" valueReference="8" causality="output" variability="discrete">
+      <Integer />
+    </ScalarVariable>
+    
+    <!-- VR 9: OSI_SensorView_Out_Size -->
+    <ScalarVariable name="OSI_SensorView_Out_Size" valueReference="9" causality="output" variability="discrete">
+      <Integer />
+    </ScalarVariable>
+
+    <!-- VR 10: DriveMode (1:Forward, 0:Neutral, -1:Reverse) -->
+    <ScalarVariable name="DriveMode" valueReference="10" causality="output" variability="discrete">
+      <Integer />
+    </ScalarVariable>
+
+    <!-- Parameters (Strings) -->
+    <!-- VR 11: PythonScriptPath -->
+    <ScalarVariable name="PythonScriptPath" valueReference="11" causality="parameter" variability="fixed">
+      <String start="logic.py" />
+    </ScalarVariable>
+
+    <!-- VR 12: PythonDependencyPath -->
+    <ScalarVariable name="PythonDependencyPath" valueReference="12" causality="parameter" variability="fixed">
+      <String start="" />
+    </ScalarVariable>
+
+    <!-- Validity Boolean (VR 6) -->
     <ScalarVariable name="valid" valueReference="6" causality="output" variability="discrete">
        <Boolean start="true" />
     </ScalarVariable>
@@ -69,10 +100,14 @@
 
   <ModelStructure>
     <Outputs>
-      <Unknown index="4" />
-      <Unknown index="5" />
-      <Unknown index="6" />
-      <Unknown index="7" />
+      <Unknown index="4" /> <!-- Throttle -->
+      <Unknown index="5" /> <!-- Brake -->
+      <Unknown index="6" /> <!-- Steering -->
+      <Unknown index="7" /> <!-- OSI_Out_BaseLo -->
+      <Unknown index="8" /> <!-- OSI_Out_BaseHi -->
+      <Unknown index="9" /> <!-- OSI_Out_Size -->
+      <Unknown index="10" /> <!-- DriveMode -->
+      <Unknown index="11" /> <!-- valid -->
     </Outputs>
   </ModelStructure>
 
