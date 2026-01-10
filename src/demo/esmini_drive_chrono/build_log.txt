@@ -1,0 +1,11 @@
+MSBuild 縺ｮ繝舌・繧ｸ繝ｧ繝ｳ 17.14.23+b0019275e (.NET Framework)
+
+  main.cpp
+  FmuHelper.cpp
+E:\Repository\GT-karny\GT-SimulatorIntegration\src\demo\esmini_drive_chrono\FmuHelper.h(7,10): error C1083: include 繝輔ぃ繧､繝ｫ繧帝幕縺代∪縺帙ｓ縲・fmilib.h':No such file or directory [E:\Repository\GT-karny\GT-SimulatorIntegration\src\demo\esmini_drive_chrono\build\esmini_drive_chrono_demo.vcxproj]
+  (繧ｽ繝ｼ繧ｹ 繝輔ぃ繧､繝ｫ '../main.cpp' 繧偵さ繝ｳ繝代う繝ｫ縺励※縺・∪縺・
+  
+E:\Repository\GT-karny\GT-SimulatorIntegration\src\demo\esmini_drive_chrono\FmuHelper.h(7,10): error C1083: include 繝輔ぃ繧､繝ｫ繧帝幕縺代∪縺帙ｓ縲・fmilib.h':No such file or directory [E:\Repository\GT-karny\GT-SimulatorIntegration\src\demo\esmini_drive_chrono\build\esmini_drive_chrono_demo.vcxproj]
+  (繧ｽ繝ｼ繧ｹ 繝輔ぃ繧､繝ｫ '../FmuHelper.cpp' 繧偵さ繝ｳ繝代う繝ｫ縺励※縺・∪縺・
+  
+  繧ｳ繝ｼ繝峨ｒ逕滓・荳ｭ...

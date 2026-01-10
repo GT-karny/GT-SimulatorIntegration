@@ -4,9 +4,14 @@
 #include <filesystem>
 #include <array>
 #include <iomanip>
+#include <chrono>
 #include "FmuHelper.h"
 #include "OsiHelper.h"
 #include "DemoConfiguration.h"
+
+// OSI Ptrs
+#include "osi_sensorview.pb.h"
+#include "osi_groundtruth.pb.h"
 
 // Helper for vector/quat names since they are expanded in FMI
 void SetVecVariable(FmuHelper& fmu, const std::string& prefix, const double* v) {
@@ -136,9 +141,83 @@ int main(int argc, char* argv[]) {
         for(auto t : terrains) t->Instantiate();
 
         // ---------------------------------------------------------------------
-        // 2. Setup Parameters
+        // 1.5. Delayed Initialization (Scenario-based Init)
         // ---------------------------------------------------------------------
-        std::cout << "Setting up parameters..." << std::endl;
+        // We need to initialize esmini *first* to get the initial ground truth.
+        // Then we extract the position of the first moving object (Host Vehicle)
+        // and pass it to Chrono FMU.
+        
+        std::cout << "Initializing esmini to get scenario start position..." << std::endl;
+        
+        // Setup esmini parameters first (needed for initialization)
+        esmini_fmu.SetVariable("xosc_path", config.GetString("esmini.xosc_path", ""));
+        // Add step_size if needed, though usually fixed_timestep arg handles it
+        // fmu.SetVariable("step_size", step_size); 
+
+        // Apply config parameters to esmini before init
+        auto set_params_from_config_esmini = [&](FmuHelper& fmu, const std::string& config_root) {
+             auto val = config.Get(config_root + ".parameters");
+             if (val.type == MiniJSON::Type::Object) {
+                 for(auto& [key, v] : val.o_val) {
+                     if (key == "step_size") continue;
+                     if (v.type == MiniJSON::Type::String) fmu.SetVariable(key, v.s_val);
+                     else if (v.type == MiniJSON::Type::Number) fmu.SetVariable(key, v.n_val);
+                     else if (v.type == MiniJSON::Type::Boolean) fmu.SetVariable(key, v.b_val);
+                 }
+             }
+        };
+        set_params_from_config_esmini(esmini_fmu, "esmini");
+
+        // Initialize esmini
+        esmini_fmu.SetupExperiment(0.0, 0.0, 0.0);
+        esmini_fmu.EnterInitializationMode();
+        esmini_fmu.ExitInitializationMode();
+
+        // Get Initial OSI
+        std::cout << "Extracting initial OSI from esmini..." << std::endl;
+        
+        int sv_lo, sv_hi, sv_sz;
+        esmini_fmu.GetVariable("OSMPSensorViewOut.base.lo", sv_lo);
+        esmini_fmu.GetVariable("OSMPSensorViewOut.base.hi", sv_hi);
+        esmini_fmu.GetVariable("OSMPSensorViewOut.size", sv_sz);
+        
+        double initial_pos[3] = {0,0,0};
+        double initial_rot[3] = {0,0,0}; // roll, pitch, yaw
+        bool found_ego = false;
+
+        if (sv_sz > 0) {
+            void* ptr = DecodeOSMPPointer(sv_lo, sv_hi);
+            osi3::SensorView sv;
+            if (sv.ParseFromArray(ptr, sv_sz)) {
+                if (sv.has_global_ground_truth() && sv.global_ground_truth().moving_object_size() > 0) {
+                     // As per user request: Use the first moving object
+                     const auto& obj = sv.global_ground_truth().moving_object(0);
+                     if (obj.has_base()) {
+                         initial_pos[0] = obj.base().position().x();
+                         initial_pos[1] = obj.base().position().y();
+                         initial_pos[2] = obj.base().position().z();
+                         
+                         initial_rot[0] = obj.base().orientation().roll();
+                         initial_rot[1] = obj.base().orientation().pitch();
+                         initial_rot[2] = obj.base().orientation().yaw();
+                         
+                         std::cout << "[Scenario Init] Found Ego Initial State: Pos(" 
+                                   << initial_pos[0] << ", " << initial_pos[1] << ", " << initial_pos[2] << ") "
+                                   << "Rot(" << initial_rot[0] << ", " << initial_rot[1] << ", " << initial_rot[2] << ")" << std::endl;
+                         found_ego = true;
+                     }
+                }
+            } else {
+                 std::cerr << "[Error] Failed to parse initial OSI SensorView!" << std::endl;
+            }
+        } else {
+             std::cerr << "[Error] Initial OSI size is 0!" << std::endl;
+        }
+
+        // ---------------------------------------------------------------------
+        // 2. Setup Parameters (Chrono & others)
+        // ---------------------------------------------------------------------
+        std::cout << "Setting up parameters for other FMUs..." << std::endl;
         
         auto set_params_from_config = [&](FmuHelper& fmu, const std::string& config_root) {
             fmu.SetVariable("step_size", config.GetDouble(config_root + ".parameters.step_size", step_size));
@@ -163,7 +242,7 @@ int main(int argc, char* argv[]) {
             }
         };
 
-        set_params_from_config(esmini_fmu, "esmini");
+        // set_params_from_config(esmini_fmu, "esmini"); // Already done
         set_params_from_config(drivecontroller_fmu, "drivecontroller");
         set_params_from_config(vehicle_fmu, "vehicle");
         set_params_from_config(powertrain_fmu, "powertrain");
@@ -171,28 +250,36 @@ int main(int argc, char* argv[]) {
         for(auto t : tires) set_params_from_config(*t, "tire");
         for(auto t : terrains) set_params_from_config(*t, "terrain");
 
-        // ---------------------------------------------------------------------
-        // 3. Initialize
-        // ---------------------------------------------------------------------
-        std::cout << "Initializing..." << std::endl;
+        // [scenario-init] Apply extracted position to Vehicle FMU
+        if (found_ego) {
+             std::cout << "[Scenario Init] Overriding Vehicle FMU initial state from scenario." << std::endl;
+             std::cout << "  Position: " << initial_pos[0] << ", " << initial_pos[1] << ", " << initial_pos[2] << std::endl;
+             std::cout << "  Yaw:      " << initial_rot[2] << std::endl;
 
-        esmini_fmu.SetupExperiment(start_time, t_end);
+             vehicle_fmu.SetVariable("init_loc.x", initial_pos[0]);
+             vehicle_fmu.SetVariable("init_loc.y", initial_pos[1]);
+             vehicle_fmu.SetVariable("init_loc.z", initial_pos[2]);
+             vehicle_fmu.SetVariable("init_yaw", initial_rot[2]); 
+        }
+
+        // ---------------------------------------------------------------------
+        // 3. Initialize (Enter/Exit Init Mode) - excluding esmini
+        // ---------------------------------------------------------------------
+        std::cout << "Initializing other FMUs..." << std::endl;
+        
+        // Esmini is skipped here because it was initialized earlier.
+
         drivecontroller_fmu.SetupExperiment(start_time, t_end);
         vehicle_fmu.SetupExperiment(start_time, t_end);
         powertrain_fmu.SetupExperiment(start_time, t_end);
         for(auto t : tires) t->SetupExperiment(start_time, t_end);
         for(auto t : terrains) t->SetupExperiment(start_time, t_end);
 
-        esmini_fmu.EnterInitializationMode();
         drivecontroller_fmu.EnterInitializationMode();
         vehicle_fmu.EnterInitializationMode();
         powertrain_fmu.EnterInitializationMode();
         for(auto t : tires) t->EnterInitializationMode();
         for(auto t : terrains) t->EnterInitializationMode();
-
-        std::cout << "[TRACE] Calling esmini ExitInitializationMode..." << std::endl;
-        esmini_fmu.ExitInitializationMode();
-        std::cout << "[TRACE] esmini ExitInitializationMode DONE." << std::endl;
         
         drivecontroller_fmu.ExitInitializationMode();
         vehicle_fmu.ExitInitializationMode();
