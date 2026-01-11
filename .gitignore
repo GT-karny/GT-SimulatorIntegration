@@ -42,3 +42,6 @@
 
 build/
 tmp_unpack/
+
+test_script/
+.vs/

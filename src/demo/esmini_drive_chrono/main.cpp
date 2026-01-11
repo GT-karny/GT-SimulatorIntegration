@@ -151,7 +151,8 @@ int main(int argc, char* argv[]) {
         
         // Setup esmini parameters first (needed for initialization)
         esmini_fmu.SetVariable("xosc_path", config.GetString("esmini.xosc_path", ""));
-        // Add step_size if needed, though usually fixed_timestep arg handles it
+        // set_params_from_config(esmini_fmu, "esmini"); 
+       // Add step_size if needed, though usually fixed_timestep arg handles it
         // fmu.SetVariable("step_size", step_size); 
 
         // Apply config parameters to esmini before init
@@ -167,11 +168,19 @@ int main(int argc, char* argv[]) {
              }
         };
         set_params_from_config_esmini(esmini_fmu, "esmini");
-
+        std::cout << "complete set_params" << std::endl;
         // Initialize esmini
         esmini_fmu.SetupExperiment(0.0, 0.0, 0.0);
+        // esmini_fmu.SetupExperiment(start_time, t_end);
+
+        std::cout << "complete setup_experiment" << std::endl;
+
         esmini_fmu.EnterInitializationMode();
+        std::cout << "complete EnterInitializationMode" << std::endl;
+        std::cerr << "[TRACE] BEFORE esmini ExitInitializationMode" << std::endl;
         esmini_fmu.ExitInitializationMode();
+        std::cerr << "[TRACE] AFTER esmini ExitInitializationMode" << std::endl;
+
 
         // Get Initial OSI
         std::cout << "Extracting initial OSI from esmini..." << std::endl;
@@ -287,6 +296,14 @@ int main(int argc, char* argv[]) {
         for(auto t : tires) t->ExitInitializationMode();
         for(auto t : terrains) t->ExitInitializationMode();
         std::cout << "[DEBUG] All init done." << std::endl;
+
+        // [Post-Init Check] Read back the specific coordinates to verify override
+        double init_check_pos[3];
+        GetVecVariable(vehicle_fmu, "ref_frame.pos", init_check_pos);
+        std::cout << "[Chrono Init Result] Pos: (" 
+                  << init_check_pos[0] << ", " 
+                  << init_check_pos[1] << ", " 
+                  << init_check_pos[2] << ")" << std::endl;
 
         // ---------------------------------------------------------------------
         // 4. Simulation Loop
@@ -435,10 +452,11 @@ int main(int argc, char* argv[]) {
                                      ref_pos_dt[1]*ref_pos_dt[1] + 
                                      ref_pos_dt[2]*ref_pos_dt[2]);
 
-            // Print every 1 second
-            if (step_count % static_cast<int>(1.0 / step_size) == 0) {
+            // Print every 0.1 second (10Hz)
+            if (step_count % static_cast<int>(0.1 / step_size) == 0) {
                 std::cout << std::fixed << std::setprecision(2);
-                std::cout << "Time: " << std::setw(6) << time << " s | "
+                std::cout << "[Chrono Sim] "
+                          << "Time: " << std::setw(6) << time << " s | "
                           << "Pos: (" << std::setw(7) << ref_pos[0] << ", " 
                           << std::setw(7) << ref_pos[1] << ", " 
                           << std::setw(7) << ref_pos[2] << ") | "
