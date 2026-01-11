@@ -1,11 +1,12 @@
 {
     "simulation": {
         "step_size": 0.01,
+        "chrono_substeps": 5,
         "start_time": 0.0,
         "end_time": 20.0
     },
     "esmini": {
-        "fmu_path": "../../../../../FMU/gt_esmini/esmini.fmu",
+        "fmu_path": "./FMU/esmini.fmu",
         "unpack_dir": "./tmp_unpack/esmini",
         "parameters": {
             "xosc_path": "../../../../../thirdparty/esmini/resources/xosc/acc-test.xosc",
@@ -14,12 +15,14 @@
         }
     },
     "drivecontroller": {
-        "fmu_path": "../../../../../FMU/gt_drivecontroller/GT-DriveController.fmu",
+        "fmu_path": "./FMU/GT-DriveController.fmu",
         "unpack_dir": "./tmp_unpack/drivecontroller",
-        "parameters": {}
+        "parameters": {
+            "PythonScriptPath": "E:/Repository/GT-karny/GT-SimulatorIntegration/test_script/resources/logic.py"
+        }
     },
     "vehicle": {
-        "fmu_path": "../../../../../FMU/chrono/FMU2cs_WheeledVehicle/FMU2cs_WheeledVehicle.fmu",
+        "fmu_path": "./FMU/FMU2cs_WheeledVehicle.fmu",
         "unpack_dir": "./tmp_unpack/vehicle",
         "parameters": {
             "data_path": "../../../../../thirdparty/chrono/data/vehicle/",
@@ -28,7 +31,7 @@
         }
     },
     "powertrain": {
-        "fmu_path": "../../../../../FMU/chrono/FMU2cs_Powertrain/FMU2cs_Powertrain.fmu",
+        "fmu_path": "./FMU/FMU2cs_Powertrain.fmu",
         "unpack_dir": "./tmp_unpack/powertrain",
         "parameters": {
             "engine_JSON": "../../../../../thirdparty/chrono/data/vehicle/hmmwv/powertrain/HMMWV_EngineSimpleMap.json",
@@ -36,14 +39,14 @@
         }
     },
     "tire": {
-        "fmu_path": "../../../../../FMU/chrono/FMU2cs_ForceElementTire/FMU2cs_ForceElementTire.fmu",
+        "fmu_path": "./FMU/FMU2cs_ForceElementTire.fmu",
         "unpack_dir_prefix": "./tmp_unpack/tire_",
         "parameters": {
             "tire_JSON": "../../../../../thirdparty/chrono/data/vehicle/hmmwv/tire/HMMWV_TMeasyTire.json"
         }
     },
     "terrain": {
-        "fmu_path": "../../../../../FMU/chrono/FMU2cs_Terrain/FMU2cs_Terrain.fmu",
+        "fmu_path": "./FMU/FMU2cs_Terrain.fmu",
         "unpack_dir_prefix": "./tmp_unpack/terrain_",
         "parameters": {
             "terrain_type": "Flat",

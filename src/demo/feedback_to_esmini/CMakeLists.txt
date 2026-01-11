@@ -73,3 +73,31 @@ add_custom_command(TARGET esmini_drive_chrono_feedback POST_BUILD
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_config.json"
     "$<TARGET_FILE_DIR:esmini_drive_chrono_feedback>/demo_config.json"
 )
+
+# Automated FMU Distribution Logic
+# Define Source Paths
+set(SRC_FMU_DIR "${REPO_ROOT}/FMU")
+set(SRC_ESMINI_FMU "${SRC_FMU_DIR}/gt_esmini/esmini.fmu")
+set(SRC_DC_FMU "${SRC_FMU_DIR}/gt_drivecontroller/GT-DriveController.fmu")
+set(SRC_CHRONO_VEHICLE "${SRC_FMU_DIR}/chrono/FMU2cs_WheeledVehicle/FMU2cs_WheeledVehicle.fmu")
+set(SRC_CHRONO_POWERTRAIN "${SRC_FMU_DIR}/chrono/FMU2cs_Powertrain/FMU2cs_Powertrain.fmu")
+set(SRC_CHRONO_TIRE "${SRC_FMU_DIR}/chrono/FMU2cs_ForceElementTire/FMU2cs_ForceElementTire.fmu")
+set(SRC_CHRONO_TERRAIN "${SRC_FMU_DIR}/chrono/FMU2cs_Terrain/FMU2cs_Terrain.fmu")
+
+# Define Destination Directory
+set(DIST_FMU_DIR "$<TARGET_FILE_DIR:esmini_drive_chrono_feedback>/FMU")
+
+add_custom_command(TARGET esmini_drive_chrono_feedback POST_BUILD
+    # Create Directory
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${DIST_FMU_DIR}"
+    
+    # Copy FMUs
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SRC_ESMINI_FMU}" "${DIST_FMU_DIR}/esmini.fmu"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SRC_DC_FMU}" "${DIST_FMU_DIR}/GT-DriveController.fmu"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SRC_CHRONO_VEHICLE}" "${DIST_FMU_DIR}/FMU2cs_WheeledVehicle.fmu"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SRC_CHRONO_POWERTRAIN}" "${DIST_FMU_DIR}/FMU2cs_Powertrain.fmu"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SRC_CHRONO_TIRE}" "${DIST_FMU_DIR}/FMU2cs_ForceElementTire.fmu"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SRC_CHRONO_TERRAIN}" "${DIST_FMU_DIR}/FMU2cs_Terrain.fmu"
+    
+    COMMENT "Copying FMUs to release directory..."
+)

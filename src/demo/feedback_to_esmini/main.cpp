@@ -52,6 +52,9 @@ int main(int argc, char* argv[]) {
     }
 
     double step_size = config.GetDouble("simulation.step_size", 1e-2);
+    int chrono_substeps = (int)config.GetDouble("simulation.chrono_substeps", 1.0);
+    if (chrono_substeps < 1) chrono_substeps = 1;
+
     double start_time = config.GetDouble("simulation.start_time", 0.0);
     double t_end = config.GetDouble("simulation.end_time", 20.0);
     
@@ -399,80 +402,76 @@ int main(int argc, char* argv[]) {
             powertrain_fmu.SetVariable("throttle", throttle);
             // std::cout << "[DEBUG] Vehicle inputs set." << std::endl;
 
-            // --- Chrono Co-simulation (Vehicle <-> Powertrain <-> Tire <-> Terrain) ---
-            
-            // Powertrain <-> Vehicle
-            // std::cout << "[DEBUG] Exchanging Powertrain variables..." << std::endl;
-            double driveshaft_torque, driveshaft_speed;
-            powertrain_fmu.GetVariable("driveshaft_torque", driveshaft_torque);
-            vehicle_fmu.SetVariable("driveshaft_torque", driveshaft_torque);
+            // --- Chrono Co-simulation (Sub-stepping) ---
+            double chrono_step_size = step_size / chrono_substeps;
+            double current_chrono_time = time;
 
-            vehicle_fmu.GetVariable("driveshaft_speed", driveshaft_speed);
-            powertrain_fmu.SetVariable("driveshaft_speed", driveshaft_speed);
-            // std::cout << "[DEBUG] Powertrain exchanged." << std::endl;
+            for (int sub = 0; sub < chrono_substeps; ++sub) {
+                // Powertrain <-> Vehicle
+                double driveshaft_torque, driveshaft_speed;
+                powertrain_fmu.GetVariable("driveshaft_torque", driveshaft_torque);
+                vehicle_fmu.SetVariable("driveshaft_torque", driveshaft_torque);
 
-            // Tires & Terrains
-            // std::cout << "[DEBUG] Exchanging Wheel/Tire variables..." << std::endl;
-            for(int i=0; i<4; ++i) {
-                // Vehicle -> Tire
-                double w_pos[3], w_rot[4], w_lin_vel[3], w_ang_vel[3];
-                GetVecVariable(vehicle_fmu, wheel_ids[i] + ".pos", w_pos);
-                GetQuatVariable(vehicle_fmu, wheel_ids[i] + ".rot", w_rot);
-                GetVecVariable(vehicle_fmu, wheel_ids[i] + ".lin_vel", w_lin_vel);
-                GetVecVariable(vehicle_fmu, wheel_ids[i] + ".ang_vel", w_ang_vel);
+                vehicle_fmu.GetVariable("driveshaft_speed", driveshaft_speed);
+                powertrain_fmu.SetVariable("driveshaft_speed", driveshaft_speed);
 
-                SetVecVariable(*tires[i], "wheel_state.pos", w_pos);
-                SetQuatVariable(*tires[i], "wheel_state.rot", w_rot);
-                SetVecVariable(*tires[i], "wheel_state.lin_vel", w_lin_vel);
-                SetVecVariable(*tires[i], "wheel_state.ang_vel", w_ang_vel);
+                // Tires & Terrains
+                for(int i=0; i<4; ++i) {
+                    // Vehicle -> Tire
+                    double w_pos[3], w_rot[4], w_lin_vel[3], w_ang_vel[3];
+                    GetVecVariable(vehicle_fmu, wheel_ids[i] + ".pos", w_pos);
+                    GetQuatVariable(vehicle_fmu, wheel_ids[i] + ".rot", w_rot);
+                    GetVecVariable(vehicle_fmu, wheel_ids[i] + ".lin_vel", w_lin_vel);
+                    GetVecVariable(vehicle_fmu, wheel_ids[i] + ".ang_vel", w_ang_vel);
 
-                // Tire -> Vehicle
-                double t_point[3], t_force[3], t_moment[3];
-                GetVecVariable(*tires[i], "wheel_load.point", t_point);
-                GetVecVariable(*tires[i], "wheel_load.force", t_force);
-                GetVecVariable(*tires[i], "wheel_load.moment", t_moment);
+                    SetVecVariable(*tires[i], "wheel_state.pos", w_pos);
+                    SetQuatVariable(*tires[i], "wheel_state.rot", w_rot);
+                    SetVecVariable(*tires[i], "wheel_state.lin_vel", w_lin_vel);
+                    SetVecVariable(*tires[i], "wheel_state.ang_vel", w_ang_vel);
 
-                SetVecVariable(vehicle_fmu, wheel_ids[i] + ".point", t_point);
-                SetVecVariable(vehicle_fmu, wheel_ids[i] + ".force", t_force);
-                SetVecVariable(vehicle_fmu, wheel_ids[i] + ".moment", t_moment);
+                    // Tire -> Vehicle
+                    double t_point[3], t_force[3], t_moment[3];
+                    GetVecVariable(*tires[i], "wheel_load.point", t_point);
+                    GetVecVariable(*tires[i], "wheel_load.force", t_force);
+                    GetVecVariable(*tires[i], "wheel_load.moment", t_moment);
 
-                // Tire -> Terrain
-                double query_point[3];
-                GetVecVariable(*tires[i], "query_point", query_point);
-                SetVecVariable(*terrains[i], "query_point", query_point);
+                    SetVecVariable(vehicle_fmu, wheel_ids[i] + ".point", t_point);
+                    SetVecVariable(vehicle_fmu, wheel_ids[i] + ".force", t_force);
+                    SetVecVariable(vehicle_fmu, wheel_ids[i] + ".moment", t_moment);
 
-                // Step Terrain
-                terrains[i]->DoStep(time, step_size);
+                    // Tire -> Terrain
+                    double query_point[3];
+                    GetVecVariable(*tires[i], "query_point", query_point);
+                    SetVecVariable(*terrains[i], "query_point", query_point);
 
-                // Terrain -> Tire
-                double height, mu, normal[3];
-                terrains[i]->GetVariable("height", height);
-                terrains[i]->GetVariable("mu", mu);
-                GetVecVariable(*terrains[i], "normal", normal);
-                
-                tires[i]->SetVariable("terrain_height", height);
-                tires[i]->SetVariable("terrain_mu", mu);
-                SetVecVariable(*tires[i], "terrain_normal", normal);
-            }
+                    // Step Terrain
+                    terrains[i]->DoStep(current_chrono_time, chrono_step_size);
 
-            // --- Step FMUs ---
-            // std::cerr << "[TRACE] Stepping Vehicle..." << std::endl;
-            if(vehicle_fmu.DoStep(time, step_size) != fmi2_status_ok) {
-                std::cerr << "Vehicle FMU step failed at time " << time << std::endl;
-                break;
-            }
-            // std::cerr << "[TRACE] Stepping Powertrain..." << std::endl;
-            if(powertrain_fmu.DoStep(time, step_size) != fmi2_status_ok) {
-                std::cerr << "Powertrain FMU step failed at time " << time << std::endl;
-                break;
-            }
-            
-            // std::cerr << "[TRACE] Stepping Tires..." << std::endl;
-            for(auto t : tires) {
-                if(t->DoStep(time, step_size) != fmi2_status_ok) {
-                    std::cerr << "Tire FMU step failed at time " << time << std::endl;
-                    break;
+                    // Terrain -> Tire
+                    double height, mu, normal[3];
+                    terrains[i]->GetVariable("height", height);
+                    terrains[i]->GetVariable("mu", mu);
+                    GetVecVariable(*terrains[i], "normal", normal);
+                    
+                    tires[i]->SetVariable("terrain_height", height);
+                    tires[i]->SetVariable("terrain_mu", mu);
+                    SetVecVariable(*tires[i], "terrain_normal", normal);
                 }
+
+                // --- Step FMUs ---
+                if(vehicle_fmu.DoStep(current_chrono_time, chrono_step_size) != fmi2_status_ok) {
+                    std::cerr << "Vehicle FMU step failed at sub-step time " << current_chrono_time << std::endl;
+                    // In a real app handle error, here we could break
+                }
+                if(powertrain_fmu.DoStep(current_chrono_time, chrono_step_size) != fmi2_status_ok) {
+                    std::cerr << "Powertrain FMU step failed at sub-step time " << current_chrono_time << std::endl;
+                }
+                
+                for(auto t : tires) {
+                    t->DoStep(current_chrono_time, chrono_step_size);
+                }
+                
+                current_chrono_time += chrono_step_size;
             }
 
             // [Feedback] 2. Update TrafficUpdate with minimal construction
