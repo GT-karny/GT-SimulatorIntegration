@@ -1,8 +1,8 @@
 {
     "simulation": {
         "step_size": 0.01,
-        "chrono_substeps": 5,
-        "enable_realtime": false,
+        "chrono_substeps": 10,
+        "enable_realtime": true,
         "enable_logging": true,
         "start_time": 0.0,
         "end_time": 20.0
@@ -29,6 +29,8 @@
         "parameters": {
             "data_path": "../../../../../thirdparty/chrono/data/vehicle/",
             "vehicle_JSON": "../../../../../thirdparty/chrono/data/vehicle/hmmwv/vehicle/HMMWV_Vehicle.json",
+            "chassis_height_offset": 0.0,
+            "init_height_margin": 0.5,
             "init_speed": 0.0
         }
     },

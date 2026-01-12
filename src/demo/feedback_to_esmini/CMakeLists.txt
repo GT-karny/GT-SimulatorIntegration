@@ -67,11 +67,18 @@ target_link_libraries(esmini_drive_chrono_feedback PRIVATE
     protobuf::libprotobuf
 )
 
-# Copy config file to build directory
+# Copy config and documentation files to build directory
 add_custom_command(TARGET esmini_drive_chrono_feedback POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/demo_config.json"
     "$<TARGET_FILE_DIR:esmini_drive_chrono_feedback>/demo_config.json"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/CONFIG.md"
+    "$<TARGET_FILE_DIR:esmini_drive_chrono_feedback>/CONFIG.md"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+    "$<TARGET_FILE_DIR:esmini_drive_chrono_feedback>/README.md"
+    COMMENT "Copying configuration and documentation files..."
 )
 
 # Automated FMU Distribution Logic

@@ -63,6 +63,8 @@ int main(int argc, char* argv[]) {
     // Real-time and Logging Config
     bool enable_realtime = config.GetBool("simulation.enable_realtime", false);
     bool enable_logging = config.GetBool("simulation.enable_logging", true);
+    double chassis_height_offset = config.GetDouble("vehicle.parameters.chassis_height_offset", 0.0);
+    double init_height_margin = config.GetDouble("vehicle.parameters.init_height_margin", 0.5);
     
     // FMU Filenames & Paths
     auto get_abs_path = [&](const std::string& key) {
@@ -210,15 +212,25 @@ int main(int argc, char* argv[]) {
             if (sv.ParseFromArray(ptr, sv_sz)) {
                 if (sv.has_global_ground_truth() && sv.global_ground_truth().moving_object_size() > 0) {
                      // As per user request: Use the first moving object
-                     const auto& obj = sv.global_ground_truth().moving_object(0);
-                     if (obj.has_base()) {
-                         initial_pos[0] = obj.base().position().x();
-                         initial_pos[1] = obj.base().position().y();
-                         initial_pos[2] = obj.base().position().z();
-                         
-                         initial_rot[0] = obj.base().orientation().roll();
-                         initial_rot[1] = obj.base().orientation().pitch();
-                         initial_rot[2] = obj.base().orientation().yaw();
+                      const auto& obj = sv.global_ground_truth().moving_object(0);
+                      if (obj.has_base()) {
+                          // [Coordinate Correction - Init]
+                          // OSI (Center) -> Ground -> Chrono (Chassis)
+                          // Z_ground = Z_osi - Height/2
+                          // Z_chrono = Z_ground + ChassisOffset + InitMargin
+                          double h_osi = 0.0;
+                          if (obj.base().has_dimension()) {
+                              h_osi = obj.base().dimension().height();
+                          }
+                          double z_ground = obj.base().position().z() - h_osi * 0.5;
+
+                          initial_pos[0] = obj.base().position().x();
+                          initial_pos[1] = obj.base().position().y();
+                          initial_pos[2] = z_ground + chassis_height_offset + init_height_margin;
+                          
+                          initial_rot[0] = obj.base().orientation().roll();
+                          initial_rot[1] = obj.base().orientation().pitch();
+                          initial_rot[2] = obj.base().orientation().yaw();
                          
                          if (enable_logging) {
                              std::cout << "[Scenario Init] Found Ego Initial State: Pos(" 
@@ -501,9 +513,19 @@ int main(int argc, char* argv[]) {
                 update_obj->CopyFrom(stored_ego_obj); // Start with full copy
                 
                 auto* base = update_obj->mutable_base();
+                // [Coordinate Correction - Feedback]
+                // Chrono (Chassis) -> Ground -> OSI (Center)
+                // Z_ground = Z_chrono - ChassisOffset
+                // Z_osi = Z_ground + Height/2
+                double h_osi = 0.0;
+                if (stored_ego_obj.base().has_dimension()) {
+                    h_osi = stored_ego_obj.base().dimension().height();
+                }
+                double z_ground = c_pos[2] - chassis_height_offset;
+
                 base->mutable_position()->set_x(c_pos[0]);
                 base->mutable_position()->set_y(c_pos[1]);
-                base->mutable_position()->set_z(c_pos[2]);
+                base->mutable_position()->set_z(z_ground + h_osi * 0.5);
 
                 // Update Orientation (RPY calculation from Chrono Quaternion)
                 double c_rot[4]; // e0, e1, e2, e3
