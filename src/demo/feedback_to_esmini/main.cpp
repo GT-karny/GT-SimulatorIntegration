@@ -6,6 +6,7 @@
 #include <array>
 #include <iomanip>
 #include <chrono>
+#include <thread>
 #include "FmuHelper.h"
 #include "OsiHelper.h"
 #include "DemoConfiguration.h"
@@ -58,6 +59,10 @@ int main(int argc, char* argv[]) {
 
     double start_time = config.GetDouble("simulation.start_time", 0.0);
     double t_end = config.GetDouble("simulation.end_time", 20.0);
+    
+    // Real-time and Logging Config
+    bool enable_realtime = config.GetBool("simulation.enable_realtime", false);
+    bool enable_logging = config.GetBool("simulation.enable_logging", true);
     
     // FMU Filenames & Paths
     auto get_abs_path = [&](const std::string& key) {
@@ -215,9 +220,11 @@ int main(int argc, char* argv[]) {
                          initial_rot[1] = obj.base().orientation().pitch();
                          initial_rot[2] = obj.base().orientation().yaw();
                          
-                         std::cout << "[Scenario Init] Found Ego Initial State: Pos(" 
-                                   << initial_pos[0] << ", " << initial_pos[1] << ", " << initial_pos[2] << ") "
-                                   << "Rot(" << initial_rot[0] << ", " << initial_rot[1] << ", " << initial_rot[2] << ")" << std::endl;
+                         if (enable_logging) {
+                             std::cout << "[Scenario Init] Found Ego Initial State: Pos(" 
+                                       << initial_pos[0] << ", " << initial_pos[1] << ", " << initial_pos[2] << ") "
+                                       << "Rot(" << initial_rot[0] << ", " << initial_rot[1] << ", " << initial_rot[2] << ")" << std::endl;
+                         }
                          found_ego = true;
                      }
                 }
@@ -231,7 +238,7 @@ int main(int argc, char* argv[]) {
         // ---------------------------------------------------------------------
         // 2. Setup Parameters (Chrono & others)
         // ---------------------------------------------------------------------
-        std::cout << "Setting up parameters for other FMUs..." << std::endl;
+        if (enable_logging) std::cout << "Setting up parameters for other FMUs..." << std::endl;
         
         auto set_params_from_config = [&](FmuHelper& fmu, const std::string& config_root) {
             fmu.SetVariable("step_size", config.GetDouble(config_root + ".parameters.step_size", step_size));
@@ -242,15 +249,15 @@ int main(int argc, char* argv[]) {
                     if (key == "step_size") continue;
                     if (v.type == MiniJSON::Type::String) {
                          fmu.SetVariable(key, v.s_val);
-                         std::cout << "[DEBUG] Set " << key << " = " << v.s_val << " (" << config_root << ")" << std::endl;
+                         if (enable_logging) std::cout << "[DEBUG] Set " << key << " = " << v.s_val << " (" << config_root << ")" << std::endl;
                     }
                     else if (v.type == MiniJSON::Type::Number) {
                          fmu.SetVariable(key, v.n_val);
-                         std::cout << "[DEBUG] Set " << key << " = " << v.n_val << " (" << config_root << ")" << std::endl;
+                         if (enable_logging) std::cout << "[DEBUG] Set " << key << " = " << v.n_val << " (" << config_root << ")" << std::endl;
                     }
                     else if (v.type == MiniJSON::Type::Boolean) {
                          fmu.SetVariable(key, v.b_val);
-                         std::cout << "[DEBUG] Set " << key << " = " << (v.b_val ? "true" : "false") << " (" << config_root << ")" << std::endl;
+                         if (enable_logging) std::cout << "[DEBUG] Set " << key << " = " << (v.b_val ? "true" : "false") << " (" << config_root << ")" << std::endl;
                     }
                 }
             }
@@ -266,9 +273,9 @@ int main(int argc, char* argv[]) {
 
         // [scenario-init] Apply extracted position to Vehicle FMU
         if (found_ego) {
-             std::cout << "[Scenario Init] Overriding Vehicle FMU initial state from scenario." << std::endl;
-             std::cout << "  Position: " << initial_pos[0] << ", " << initial_pos[1] << ", " << initial_pos[2] << std::endl;
-             std::cout << "  Yaw:      " << initial_rot[2] << std::endl;
+             if (enable_logging) std::cout << "[Scenario Init] Overriding Vehicle FMU initial state from scenario." << std::endl;
+             if (enable_logging) std::cout << "  Position: " << initial_pos[0] << ", " << initial_pos[1] << ", " << initial_pos[2] << std::endl;
+             if (enable_logging) std::cout << "  Yaw:      " << initial_rot[2] << std::endl;
 
              vehicle_fmu.SetVariable("init_loc.x", initial_pos[0]);
              vehicle_fmu.SetVariable("init_loc.y", initial_pos[1]);
@@ -279,7 +286,7 @@ int main(int argc, char* argv[]) {
         // ---------------------------------------------------------------------
         // 3. Initialize (Enter/Exit Init Mode) - excluding esmini
         // ---------------------------------------------------------------------
-        std::cout << "Initializing other FMUs..." << std::endl;
+        if (enable_logging) std::cout << "Initializing other FMUs..." << std::endl;
         
         // Esmini is skipped here because it was initialized earlier.
 
@@ -300,24 +307,29 @@ int main(int argc, char* argv[]) {
         powertrain_fmu.ExitInitializationMode();
         for(auto t : tires) t->ExitInitializationMode();
         for(auto t : terrains) t->ExitInitializationMode();
-        std::cout << "[DEBUG] All init done." << std::endl;
+        if (enable_logging) std::cout << "[DEBUG] All init done." << std::endl;
 
         // [Post-Init Check] Read back the specific coordinates to verify override
         double init_check_pos[3];
         GetVecVariable(vehicle_fmu, "ref_frame.pos", init_check_pos);
-        std::cout << "[Chrono Init Result] Pos: (" 
-                  << init_check_pos[0] << ", " 
-                  << init_check_pos[1] << ", " 
-                  << init_check_pos[2] << ")" << std::endl;
+        if (enable_logging) {
+            std::cout << "[Chrono Init Result] Pos: (" 
+                      << init_check_pos[0] << ", " 
+                      << init_check_pos[1] << ", " 
+                      << init_check_pos[2] << ")" << std::endl;
+        }
 
         // ---------------------------------------------------------------------
         // 4. Simulation Loop
         // ---------------------------------------------------------------------
-        std::cout << "Starting simulation loop..." << std::endl;
-        std::cout << "Step size: " << step_size << " s, End time: " << t_end << " s" << std::endl;
-        std::cout << std::string(80, '=') << std::endl;
+        if (enable_logging) std::cout << "Starting simulation loop..." << std::endl;
+        if (enable_logging) std::cout << "Step size: " << step_size << " s, End time: " << t_end << " s" << std::endl;
+        if (enable_logging) std::cout << std::string(80, '=') << std::endl;
         
         double time = start_time;
+        // Real-time sync base
+        auto rt_start_time = std::chrono::steady_clock::now();
+        
         std::string wheel_ids[4] = {"wheel_FL", "wheel_FR", "wheel_RL", "wheel_RR"};
         int step_count = 0;
 
@@ -327,7 +339,7 @@ int main(int argc, char* argv[]) {
         std::string tu_buffer;
         tu_buffer.reserve(64000); 
         bool ego_found_in_dc = false;
-    uint64_t found_ego_id = 0; // Store detected ID
+        uint64_t found_ego_id = 0; // Store detected ID
 
         while (time < t_end) {
             // --- esmini -> DriveController (OSI SensorView) ---
@@ -336,7 +348,7 @@ int main(int argc, char* argv[]) {
             esmini_fmu.GetVariable("OSMPSensorViewOut.base.hi", osi_sv_hi);
             esmini_fmu.GetVariable("OSMPSensorViewOut.size", osi_sv_size);
 
-            std::cout << "[DEBUG] Step " << time << ": OSI size=" << osi_sv_size << std::endl;
+            if(enable_logging) std::cout << "[DEBUG] Step " << time << ": OSI size=" << osi_sv_size << std::endl;
 
             // Direct pointer transfer (same process)
             drivecontroller_fmu.SetVariable("OSI_SensorView_In_BaseLo", osi_sv_lo);
@@ -346,19 +358,19 @@ int main(int argc, char* argv[]) {
             // Debug: Decode pointer to verify (optional)
             if (osi_sv_size > 0 && step_count % 100 == 0) {
                 void* osi_ptr = DecodeOSMPPointer(osi_sv_lo, osi_sv_hi);
-                std::cout << "[DEBUG] OSI SensorView pointer: " << osi_ptr 
+                if(enable_logging) std::cout << "[DEBUG] OSI SensorView pointer: " << osi_ptr 
                           << ", size: " << osi_sv_size << " bytes" << std::endl;
             }
 
             // --- Step DriveController ---
-            std::cerr << "[TRACE] Stepping DriveController..." << std::endl;
+            if(enable_logging) std::cerr << "[TRACE] Stepping DriveController..." << std::endl;
             if(drivecontroller_fmu.DoStep(time, step_size) != fmi2_status_ok) {
                 std::cerr << "DriveController FMU step failed at time " << time << std::endl;
                 break;
             }
-            std::cout << "[DEBUG] DriveController Step OK" << std::endl;
+            if(enable_logging) std::cout << "[DEBUG] DriveController Step OK" << std::endl;
 
-            std::cout << "[DEBUG] DriveController Step OK" << std::endl;
+            if(enable_logging) std::cout << "[DEBUG] DriveController Step OK" << std::endl;
 
             // [Feedback] 1. Identify Ego from DC Output
             if (!ego_found_in_dc) {
@@ -381,7 +393,7 @@ int main(int argc, char* argv[]) {
                             // copy to current_tu for consistency/logging if needed, though cleared downstream
                             current_tu.add_update()->CopyFrom(ego_obj); 
                             found_ego_id = ego_obj.id().value();
-                            std::cout << "[Feedback] Found Ego ID from DC: " << ego_obj.id().value() << std::endl;
+                            if(enable_logging) std::cout << "[Feedback] Found Ego ID from DC: " << ego_obj.id().value() << std::endl;
                             ego_found_in_dc = true;
                         }
                     }
@@ -523,7 +535,7 @@ int main(int argc, char* argv[]) {
                 esmini_fmu.SetVariable("OSMPTrafficUpdateIn.size", tu_sz);
             }
 
-            std::cerr << "[TRACE] Stepping Esmini..." << std::endl;
+            if(enable_logging) std::cerr << "[TRACE] Stepping Esmini..." << std::endl;
             if(esmini_fmu.DoStep(time, step_size) != fmi2_status_ok) {
                 std::cerr << "Esmini FMU step failed at time " << time << std::endl;
                 break;
@@ -540,13 +552,19 @@ int main(int argc, char* argv[]) {
                                      ref_pos_dt[2]*ref_pos_dt[2]);
 
             // Print every 0.1 second (10Hz)
-            if (step_count % static_cast<int>(0.1 / step_size) == 0) {
+            if (step_count % static_cast<int>(0.1 / step_size) == 0 && enable_logging) {
+                // Calculate RTF
+                auto now = std::chrono::steady_clock::now();
+                double elapsed_s = std::chrono::duration_cast<std::chrono::duration<double>>(now - rt_start_time).count();
+                double rtf = (elapsed_s > 0) ? (time - start_time) / elapsed_s : 0.0;
+
                 std::cout << std::fixed << std::setprecision(2);
                 std::cout << "[Chrono Sim] "
                           << "Time: " << std::setw(6) << time << " s | "
-                          << "Pos: (" << std::setw(7) << ref_pos[0] << ", " 
-                          << std::setw(7) << ref_pos[1] << ", " 
-                          << std::setw(7) << ref_pos[2] << ") | "
+                          << "Pos: (" << std::setw(6) << ref_pos[0] << ", " 
+                          << std::setw(6) << ref_pos[1] << ", " 
+                          << std::setw(6) << ref_pos[2] << ") | "
+                          << "RTF: " << std::setw(4) << rtf << "x | "
                           << "Speed: " << std::setw(6) << speed << " m/s | "
                           << "Throttle: " << std::setw(5) << throttle << " | "
                           << "Brake: " << std::setw(5) << brake << " | "
@@ -554,6 +572,22 @@ int main(int argc, char* argv[]) {
                           << std::endl;
             }
 
+            // Real-time synchronization
+            if (enable_realtime) {
+                // Current simulation duration
+                double sim_duration = time - start_time;
+                
+                // Actual elapsed time
+                auto now = std::chrono::steady_clock::now();
+                auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(now - rt_start_time).count();
+
+                if (sim_duration > elapsed_seconds) {
+                    double sleep_duration = sim_duration - elapsed_seconds;
+                    std::this_thread::sleep_for(std::chrono::duration<double>(sleep_duration));
+                }
+            }
+
+            // Step Update
             time += step_size;
             step_count++;
         }
