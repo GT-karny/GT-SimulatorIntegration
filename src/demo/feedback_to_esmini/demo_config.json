@@ -2,6 +2,8 @@
     "simulation": {
         "step_size": 0.01,
         "chrono_substeps": 5,
+        "enable_realtime": false,
+        "enable_logging": true,
         "start_time": 0.0,
         "end_time": 20.0
     },
@@ -11,7 +13,7 @@
         "parameters": {
             "xosc_path": "../../../../../thirdparty/esmini/resources/xosc/acc-test.xosc",
             "use_viewer": false,
-            "esmini_args": "--headless --fixed_timestep 0.01"
+            "esmini_args": "--fixed_timestep 0.01 --window 100 100 500 500"
         }
     },
     "drivecontroller": {
