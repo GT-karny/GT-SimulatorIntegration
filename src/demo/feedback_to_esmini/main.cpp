@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cmath>
 #include <vector>
 #include <filesystem>
 #include <array>
@@ -491,6 +492,22 @@ int main(int argc, char* argv[]) {
                 base->mutable_position()->set_x(c_pos[0]);
                 base->mutable_position()->set_y(c_pos[1]);
                 base->mutable_position()->set_z(c_pos[2]);
+
+                // Update Orientation (RPY calculation from Chrono Quaternion)
+                double c_rot[4]; // e0, e1, e2, e3
+                GetQuatVariable(vehicle_fmu, "ref_frame.rot", c_rot);
+                double e0 = c_rot[0];
+                double e1 = c_rot[1];
+                double e2 = c_rot[2];
+                double e3 = c_rot[3];
+
+                double roll  = std::atan2(2.0 * (e0 * e1 + e2 * e3), 1.0 - 2.0 * (e1 * e1 + e2 * e2));
+                double pitch = std::asin(2.0 * (e0 * e2 - e3 * e1));
+                double yaw   = std::atan2(2.0 * (e0 * e3 + e1 * e2), 1.0 - 2.0 * (e2 * e2 + e3 * e3));
+
+                base->mutable_orientation()->set_roll(roll);
+                base->mutable_orientation()->set_pitch(pitch);
+                base->mutable_orientation()->set_yaw(yaw);
 
                 // Serialize
                 tu_buffer.clear();
