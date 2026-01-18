@@ -543,6 +543,33 @@ int main(int argc, char* argv[]) {
                 base->mutable_orientation()->set_pitch(pitch);
                 base->mutable_orientation()->set_yaw(yaw);
 
+                // [Feedback-Add] Velocity
+                double c_vel[3];
+                GetVecVariable(vehicle_fmu, "ref_frame.pos_dt", c_vel);
+                base->mutable_velocity()->set_x(c_vel[0]);
+                base->mutable_velocity()->set_y(c_vel[1]);
+                base->mutable_velocity()->set_z(c_vel[2]);
+
+                // [Feedback-Add] Orientation Rate (Angular Velocity from Quaternion Derivative)
+                // Calculate Body Angular Velocity: w = 2 * conj(q) * dq
+                double c_rot_dt[4];
+                GetQuatVariable(vehicle_fmu, "ref_frame.rot_dt", c_rot_dt);
+                double de0 = c_rot_dt[0];
+                double de1 = c_rot_dt[1];
+                double de2 = c_rot_dt[2];
+                double de3 = c_rot_dt[3];
+
+                // w_x = 2 * (e0*de1 - e1*de0 - e2*de3 + e3*de2)
+                double omega_x = 2.0 * (e0 * de1 - e1 * de0 - e2 * de3 + e3 * de2);
+                // w_y = 2 * (e0*de2 + e1*de3 - e2*de0 - e3*de1)
+                double omega_y = 2.0 * (e0 * de2 + e1 * de3 - e2 * de0 - e3 * de1);
+                // w_z = 2 * (e0*de3 - e1*de2 + e2*de1 - e3*de0)
+                double omega_z = 2.0 * (e0 * de3 - e1 * de2 + e2 * de1 - e3 * de0);
+
+                base->mutable_orientation_rate()->set_roll(omega_x);
+                base->mutable_orientation_rate()->set_pitch(omega_y);
+                base->mutable_orientation_rate()->set_yaw(omega_z);
+
                 // Serialize
                 tu_buffer.clear();
                 current_tu.SerializeToString(&tu_buffer);
