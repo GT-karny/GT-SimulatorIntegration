@@ -20,7 +20,7 @@
         "fmu_path": "./FMU/GT-DriveController.fmu",
         "unpack_dir": "./tmp_unpack/drivecontroller",
         "parameters": {
-            "PythonScriptPath": "./script/logic.py"
+            "PythonScriptPath": "./script/logic_controller_example.py"
         }
     },
     "vehicle": {
