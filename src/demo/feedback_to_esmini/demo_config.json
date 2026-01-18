@@ -13,7 +13,7 @@
         "parameters": {
             "xosc_path": "./resources/esmini/xosc/acc-test.xosc",
             "use_viewer": false,
-            "esmini_args": "--fixed_timestep 0.01 --window 100 100 500 500"
+            "esmini_args": "--window 100 100 500 500"
         }
     },
     "drivecontroller": {
@@ -29,7 +29,7 @@
         "parameters": {
             "data_path": "./resources/chrono/vehicle/",
             "vehicle_JSON": "./resources/chrono/vehicle/hmmwv/vehicle/HMMWV_Vehicle.json",
-            "chassis_height_offset": 0.0,
+            "chassis_height_offset": 0.5,
             "init_height_margin": 0.5,
             "init_speed": 0.0
         }
