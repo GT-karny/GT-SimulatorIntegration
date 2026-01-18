@@ -108,3 +108,25 @@ add_custom_command(TARGET esmini_drive_chrono_feedback POST_BUILD
     
     COMMENT "Copying FMUs to release directory..."
 )
+
+# Copy Resources
+set(SRC_ESMINI_RESOURCES "${REPO_ROOT}/thirdparty/esmini/resources")
+set(SRC_CHRONO_VEHICLE_DATA "${REPO_ROOT}/thirdparty/chrono/data/vehicle")
+set(SRC_LOCAL_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/script")
+
+set(DIST_RESOURCES_DIR "$<TARGET_FILE_DIR:esmini_drive_chrono_feedback>/resources")
+set(DIST_SCRIPT_DIR "$<TARGET_FILE_DIR:esmini_drive_chrono_feedback>/script")
+
+add_custom_command(TARGET esmini_drive_chrono_feedback POST_BUILD
+    # Create Directories
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${DIST_RESOURCES_DIR}/esmini"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${DIST_RESOURCES_DIR}/chrono/vehicle"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${DIST_SCRIPT_DIR}"
+
+    # Copy Resources
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${SRC_ESMINI_RESOURCES}" "${DIST_RESOURCES_DIR}/esmini"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${SRC_CHRONO_VEHICLE_DATA}" "${DIST_RESOURCES_DIR}/chrono/vehicle"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${SRC_LOCAL_SCRIPT}" "${DIST_SCRIPT_DIR}"
+
+    COMMENT "Copying resources to release directory..."
+)

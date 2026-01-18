@@ -11,7 +11,7 @@
         "fmu_path": "./FMU/esmini.fmu",
         "unpack_dir": "./tmp_unpack/esmini",
         "parameters": {
-            "xosc_path": "../../../../../thirdparty/esmini/resources/xosc/acc-test.xosc",
+            "xosc_path": "./resources/esmini/xosc/acc-test.xosc",
             "use_viewer": false,
             "esmini_args": "--fixed_timestep 0.01 --window 100 100 500 500"
         }
@@ -20,15 +20,15 @@
         "fmu_path": "./FMU/GT-DriveController.fmu",
         "unpack_dir": "./tmp_unpack/drivecontroller",
         "parameters": {
-            "PythonScriptPath": "E:/Repository/GT-karny/GT-SimulatorIntegration/test_script/resources/logic.py"
+            "PythonScriptPath": "./script/logic.py"
         }
     },
     "vehicle": {
         "fmu_path": "./FMU/FMU2cs_WheeledVehicle.fmu",
         "unpack_dir": "./tmp_unpack/vehicle",
         "parameters": {
-            "data_path": "../../../../../thirdparty/chrono/data/vehicle/",
-            "vehicle_JSON": "../../../../../thirdparty/chrono/data/vehicle/hmmwv/vehicle/HMMWV_Vehicle.json",
+            "data_path": "./resources/chrono/vehicle/",
+            "vehicle_JSON": "./resources/chrono/vehicle/hmmwv/vehicle/HMMWV_Vehicle.json",
             "chassis_height_offset": 0.0,
             "init_height_margin": 0.5,
             "init_speed": 0.0
@@ -38,15 +38,15 @@
         "fmu_path": "./FMU/FMU2cs_Powertrain.fmu",
         "unpack_dir": "./tmp_unpack/powertrain",
         "parameters": {
-            "engine_JSON": "../../../../../thirdparty/chrono/data/vehicle/hmmwv/powertrain/HMMWV_EngineSimpleMap.json",
-            "transmission_JSON": "../../../../../thirdparty/chrono/data/vehicle/hmmwv/powertrain/HMMWV_AutomaticTransmissionSimpleMap.json"
+            "engine_JSON": "./resources/chrono/vehicle/hmmwv/powertrain/HMMWV_EngineSimpleMap.json",
+            "transmission_JSON": "./resources/chrono/vehicle/hmmwv/powertrain/HMMWV_AutomaticTransmissionSimpleMap.json"
         }
     },
     "tire": {
         "fmu_path": "./FMU/FMU2cs_ForceElementTire.fmu",
         "unpack_dir_prefix": "./tmp_unpack/tire_",
         "parameters": {
-            "tire_JSON": "../../../../../thirdparty/chrono/data/vehicle/hmmwv/tire/HMMWV_TMeasyTire.json"
+            "tire_JSON": "./resources/chrono/vehicle/hmmwv/tire/HMMWV_TMeasyTire.json"
         }
     },
     "terrain": {
